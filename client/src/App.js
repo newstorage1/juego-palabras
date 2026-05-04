@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
+import { SOCKET_URL } from './config/config';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3001');
+const socket = io(SOCKET_URL);
 
 function App() {
   const [screen, setScreen] = useState('lobby');
@@ -91,6 +92,7 @@ function App() {
             playerIndex={playerIndex}
             userSettings={userSettings}
             onUpdateSettings={updateUserSettings}
+            gameId={gameId}
           />
         )}
       </div>
@@ -273,7 +275,7 @@ function Lobby({ onCreateGame, onJoinGame, userSettings, onUpdateSettings }) {
 }
 
 // Game Component
-function Game({ gameData, playerIndex, userSettings, onUpdateSettings }) {
+function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId }) {
   const [grid, setGrid] = useState(gameData.grid);
   const [words, setWords] = useState(gameData.words);
   const [players, setPlayers] = useState(gameData.players);
@@ -417,11 +419,16 @@ function Game({ gameData, playerIndex, userSettings, onUpdateSettings }) {
       setScreen('lobby');
     });
 
+    socket.on('chatMessage', (data) => {
+      setChatMessages(prev => [...prev, data]);
+    });
+
     return () => {
       socket.off('wordFound');
       socket.off('playerFrozen');
       socket.off('timerUpdate');
       socket.off('gameEnded');
+      socket.off('chatMessage');
     };
   }, [players, playerIndex, gameId]);
 

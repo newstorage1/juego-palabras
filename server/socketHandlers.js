@@ -276,6 +276,19 @@ function handleSocketEvents(io) {
       }
     });
     
+    // Chat
+    socket.on('chatMessage', (data) => {
+      const { gameId, message, playerId, nickname } = data;
+      if (games[gameId]) {
+        io.to(gameId).emit('chatMessage', {
+          type: playerId === games[gameId].players[0]?.id ? 'me' : 'other',
+          message,
+          playerId,
+          nickname
+        });
+      }
+    });
+    
     // Desconexión
     socket.on('disconnect', () => {
       console.log('Usuario desconectado:', socket.id);

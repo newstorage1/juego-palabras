@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { SOCKET_URL } from '../config/config';
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3001');
+const socket = io(SOCKET_URL);
 
 export function useSocket(gameId) {
   const [players, setPlayers] = useState([]);

@@ -17,11 +17,14 @@ const io = new Server(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static('client/build'));
+
+// Servir archivos estáticos del cliente (modo desarrollo)
+app.use(express.static(path.join(__dirname, '../client/public')));
+app.use(express.static(path.join(__dirname, '../client/src')));
 
 // Rutas estáticas para el cliente
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client/public/index.html'));
 });
 
 // Configuración
