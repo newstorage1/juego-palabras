@@ -1,0 +1,30 @@
+{
+  "name": "sopa-pro-multiplayer",
+  "version": "1.0.0",
+  "description": "Sopa de Letras Competitiva en Tiempo Real",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "nodemon server/index.js",
+    "dev:client": "cd client && npm start",
+    "build": "cd client && npm run build"
+  },
+  "keywords": [
+    "game",
+    "word",
+    "multiplayer",
+    "socket.io"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  }
+}
