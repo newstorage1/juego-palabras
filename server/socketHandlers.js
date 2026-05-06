@@ -232,7 +232,7 @@ function handleSocketEvents(io) {
       const foundWords = game.words.filter(w => w.foundBy).length;
       
       if (foundWords >= Math.ceil(totalWords * 0.51)) {
-        endGame(gameId);
+        endGame(gameId, io);
       }
       
       saveGame(gameId, game);
@@ -277,16 +277,34 @@ function handleSocketEvents(io) {
     });
     
     // Chat
-    socket.on('chatMessage', (data) => {
+    socket.on('chatMessage', (data, callback) => {
       const { gameId, message, playerId, nickname } = data;
-      if (games[gameId]) {
-        io.to(gameId).emit('chatMessage', {
-          type: playerId === games[gameId].players[0]?.id ? 'me' : 'other',
-          message,
-          playerId,
-          nickname
-        });
+      console.log("📩 chatMessage recibido:", data);
+      
+      if (!gameId || !message) {
+        console.error("❌ Datos incompletos");
+        if (callback) callback({ error: 'Datos incompletos' });
+        return;
       }
+      
+      if (!games[gameId]) {
+        console.error("❌ Partida no encontrada:", gameId);
+        if (callback) callback({ error: 'Partida no encontrada' });
+        return;
+      }
+      
+      const msg = {
+        type: playerId === games[gameId].players[0]?.id ? 'me' : 'other',
+        message,
+        playerId,
+        nickname,
+        timestamp: new Date().toISOString()
+      };
+      
+      io.to(gameId).emit('chatMessage', msg);
+      console.log("📤 Emitido a sala:", gameId);
+      
+      if (callback) callback({ success: true });
     });
     
     // Desconexión
@@ -328,12 +346,12 @@ function startTimer(gameId) {
     
     if (timeLeft <= 0) {
       clearInterval(game.timer);
-      endGame(gameId);
+      endGame(gameId, io);
     }
   }, 1000);
 }
 
-function endGame(gameId) {
+function endGame(gameId, io) {
   const game = games[gameId];
   if (!game) return;
   
@@ -378,5 +396,6 @@ module.exports = {
   handleSocketEvents,
   initializeFromSavedGames,
   games,
-  users
+  users,
+  endGame
 };

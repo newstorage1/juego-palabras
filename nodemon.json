@@ -1,0 +1,5 @@
+{
+  "watch": "server",
+  "ignore": ["saves/**", "node_modules"],
+  "ext": "js,json"
+}

@@ -92,6 +92,11 @@
 - Guardado forzado al finalizar una partida
 - Guardado inmediato al encontrar una palabra
 
+#### Configuración de Desarrollo:
+- Archivo `nodemon.json` para evitar reinicios no deseados
+- Ignora cambios en la carpeta `saves/` para prevenir conflictos durante el juego
+- El servidor monitoriza solo la carpeta `server/`
+
 ---
 
 ### **4. Temporizador y Condición de Victoria**
@@ -102,7 +107,8 @@
 - Al llegar a 0, se finaliza la partida automáticamente
 
 #### Condición de Victoria:
-- **Objetivo**: Encontrar el 51% de las palabras (ej. 26 de 50)
+- **Modo Individual**: Encontrar el 100% de las palabras antes de que termine el tiempo
+- **Modo Multijugador**: Encontrar el 51% de las palabras (ej. 26 de 50)
 - **Empate**: Si ambos llegan al 51% al mismo tiempo, gana quien tenga más puntos
 - **Puntos**: 
   - Palabras cortas (≤4 letras): 1 punto
@@ -114,11 +120,11 @@
 - El contador de intentos fallidos se resetea al encontrar una palabra correctamente
 
 #### Final de Partida:
-- Modal de "MVP" con estadísticas:
-  - Palabra más larga encontrada
-  - Tiempo promedio de reacción (segundos por palabra)
-  - Precisión (palabras correctas / total de intentos)
-  - Ganador con puntaje final
+- Pantalla de Fin de Juego con:
+  - Nombre del ganador y puntuación
+  - Puntuación final de todos los jugadores
+  - Estadísticas: palabras encontradas, palabra más larga
+  - Botón "Regresar al Lobby"
 
 ---
 
@@ -169,14 +175,91 @@
 
 ## 🚀 Flujo y Menús del Juego (Actualizado)
 
-### **1. Menú Principal (Lobby)**
+### **1. Pantalla de Entrada (Pre-lobby)**
+
+Esta es la primera pantalla que ve el usuario al entrar al juego:
+
+- **Campo Nickname**: El usuario ingresa su apodo (obligatorio, 3-15 caracteres)
+- **Campo Edad**: El usuario ingresa su edad (obligatorio, 1-120 años)
+  - **Restricción**: Si es menor de 13 años: Solo puede jugar en modo individual
+  - Si es mayor de 13 años: Puede elegir entre individual o multijugador
+- **Selector de Modo de Juego** (solo si tiene 13 años o más):
+  - 🔵 **Modo Individual**: Juega solo contra el tiempo
+  - 🟢 **Modo Multijugador**: Juega con otros jugadores en línea
+- **Botón "Entrar"**: Valida los datos y dirige al lobby correspondiente
+
+#### Validaciones:
+- Nickname no puede estar vacío
+- Edad debe ser un número válido
+- Si edad < 13: Deshabilitar opción multijugador y mostrar mensaje informativo
+
+### **2. Lobby - Modo Individual**
+
+(Si选择了Individual o tiene menos de 13 años)
 
 - **Crear Partida**: Genera código único (ej. SOPA-X92)
 - **Unirse a Partida**: Campo para introducir código
-- **Perfil Rápido**: Selección de Avatar y Nickname
 - **Selector de Dificultad**: Tamaño de cuadrícula y temática
 - **Selector de Idioma**: Español o Inglés
 - **Solicitar Temario con IA**: Botón para pedir palabras personalizadas
+- **Botón "Iniciar Juego"**: Comienza la partida individualmente
+
+### **3. Lobby - Modo Multijugador (Sala de Espera)**
+
+(Si选择了Multijugador y tiene 13 años o más)
+
+El lobby de multijugador funciona como una **sala de espera con chat**:
+
+#### Zona de Chat Público:
+- **Chat en tiempo real**: Los usuarios pueden coordinada y	charlar
+- **Indicación de usuarios conectados**: Muestra quién está en la sala
+- **Sistema de creación de partida**:
+  - Cualquier jugador puede crear una sesión presionando "Crear Partida"
+  - Se genera un código único (ej. SOPA-X92)
+  - El creador puede compartir este código via chat
+
+#### Unirse a Partida (ya implementado):
+- **Campo para código**: Campo visible donde se puede ingresar el código de la partida
+- **Botón "Unirse"**: Botón para confirmar ingreso a la partida
+- **Lista de espera**: Muestra los jugadores que se han unido a la partida
+- **Estado de preparación**: Cada jugador debe confirmar que está listo
+
+#### Control del Juego:
+- **Solo el creador puede iniciar**: Cuando todos los jugadores desired están unidos, el creador presiona "Iniciar Juego"
+- **Sincronización**: Al presionar iniciar, todos los jugadores entran al juego simultáneamente
+- **El juego no comienza hasta que el creador lo indique**
+
+#### Información Mostrada:
+- Código de la partida (para compartir)
+- Lista de jugadores conectados
+- Contador de jugadores listos
+- Botón "Crear Partida" (para cualquier jugador)
+- **Botón "Unirse" con campo de código** (ya implementado)
+- Botón "Iniciar Juego" (solo visible para el creador de la partida)
+
+---
+
+### **4. Ejemplo de Flujo - Modo Multijugador**
+
+```
+Usuario entra al juego → Pantalla de Entrada
+  ├── Ingresa Nick: "Juanito"
+  ├── Ingresa Edad: 20
+  └── Selecciona: Multijugador
+       ↓
+Entra al Lobby Multijugador (Sala de Espera)
+  ├── Chat público disponible
+  ├── Juanito escribe: "Voy a crear partida, esperen"
+  ├── Juanito presiona "Crear Partida"
+  ├── Sistema genera: "SOPA-ABC"
+  ├── Juanito escribe en chat: "Mi código es SOPA-ABC, únanse"
+  ├── María ve el código y presiona "Unirse", ingresa "SOPA-ABC"
+  ├── Pedro ve el código y presiona "Unirse", ingresa "SOPA-ABC"
+  ├── Juanito ve en la lista: "María conectada", "Pedro conectado"
+  ├── Juanito escribe: "Ya estamos todos, inicio?"
+  ├── Juanito presiona "Iniciar Juego"
+  └── Todos entran al juego simultáneamente
+```
 
 ### **2. Interfaz de Juego (Dashboard)**
 
@@ -196,7 +279,7 @@
 - Color según jugador que la encontró
 
 #### Lateral (Chat y Log):
-- Chat para comunicarse
+- Chat para comunicarse (funciona mediante HTTP polling)
 - Historial de quién encontró qué palabra
 - Notificaciones de congelamiento
 
@@ -256,10 +339,12 @@
     "gridSize": 15,
     "theme": "technology",
     "language": "en",
-    "timeLimitMinutes": 15
+    "timeLimitMinutes": 15,
+    "mode": "solo" // o "multiplayer"
   },
   "timestamp": "2026-05-04T10:30:00Z",
-  "gameState": "playing",
+  "gameState": "waiting" | "playing" | "finished",
+  "lastWordResult": null, // Resultado de la última palabra encontrada (para polling)
   "winner": null
 }
 ```
@@ -278,6 +363,7 @@
 - Guardado cada 30 segundos
 - Recuperación al reiniciar
 - Notificación a jugadores de partida recuperada
+- El resultado de palabras se guarda en el objeto game para survive a reinicios del servidor
 
 ### **Temporizador Global**:
 - Contador regresivo visible para todos
@@ -322,16 +408,22 @@
 
 ---
 
-## 🎯 Próximos Pasos
+## 🎯 Funcionalidades Implementadas
 
-1. Diseñar el sistema de UI para selección (arrastre y validación)
-2. Implementar generación de palabras con IA
-3. Crear sistema de persistencia JSON
-4. Implementar temporizador global
-5. Desarrollar lógica de congelamiento
-6. Implementar sistema de personalización (temas, colores, fondos)
-7. Implementar modo individual
+1. ✅ Sistema de UI para selección (botón Confirmar)
+2. ✅ Sistema de persistencia JSON
+3. ✅ Temporizador global
+4. ✅ Lógica de congelamiento
+5. ✅ Sistema de personalización (temas, colores, fondos)
+6. ✅ Modo individual y multijugador
+7. ✅ Chat mediante HTTP polling
+8. ✅ Pantalla de fin de juego con botón de regresar al lobby
+9. ✅ Botón de confirmación de palabras
 
 ---
 
-¿Quieres que comience a implementar el demo inicial con estas características?
+## 🎯 Próximos Pasos (Por Implementar)
+
+1. Implementar generación de palabras con IA
+2. Mejorar animaciones de feedback visual
+3. Añadir más estadísticas al final del juego (tiempo promedio de reacción, precisión)

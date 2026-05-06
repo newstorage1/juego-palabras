@@ -10,6 +10,7 @@ function App() {
   const [gameId, setGameId] = useState(null);
   const [gameData, setGameData] = useState(null);
   const [playerIndex, setPlayerIndex] = useState(null);
+  const [gameEndedData, setGameEndedData] = useState(null);
   const [userSettings, setUserSettings] = useState({
     nickname: '',
     avatar: 'default',
@@ -26,6 +27,16 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', userSettings.theme);
   }, [userSettings.theme]);
+
+  // Función para abandonar y regresar al lobby
+  const handleAbandonar = () => {
+    socket.disconnect();
+    socket.connect();
+    setGameEndedData(null);
+    setGameId(null);
+    setGameData(null);
+    setScreen('lobby');
+  };
 
   // Configuración del juego
   const handleCreateGame = useCallback((userData) => {
@@ -93,6 +104,9 @@ function App() {
             userSettings={userSettings}
             onUpdateSettings={updateUserSettings}
             gameId={gameId}
+            onAbandonar={handleAbandonar}
+            gameEndedData={gameEndedData}
+            setGameEndedData={setGameEndedData}
           />
         )}
       </div>
@@ -275,7 +289,7 @@ function Lobby({ onCreateGame, onJoinGame, userSettings, onUpdateSettings }) {
 }
 
 // Game Component
-function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId }) {
+function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId, onAbandonar, gameEndedData, setGameEndedData }) {
   const [grid, setGrid] = useState(gameData.grid);
   const [words, setWords] = useState(gameData.words);
   const [players, setPlayers] = useState(gameData.players);
@@ -286,6 +300,10 @@ function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId })
   const [chatInput, setChatInput] = useState('');
   const [frozen, setFrozen] = useState(false);
   const [frozenTime, setFrozenTime] = useState(0);
+  const [localGameEndedData, setLocalGameEndedData] = useState(null);
+
+  // Usar datos del padre si existen, sino usar locale
+  const effectiveGameEndedData = gameEndedData || localGameEndedData;
 
   // Actualizar estado cuando cambia gameData
   useEffect(() => {
@@ -358,37 +376,105 @@ function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId })
     }
   };
 
-  // Confirmar selección
-  const confirmSelection = () => {
+  // Confirmar selección (HTTP)
+  const confirmSelection = async () => {
     if (currentWord.length < 2) {
       setSelectedCells([]);
       setCurrentWord('');
       return;
     }
 
-    socket.emit('selectWord', {
-      gameId,
-      playerIndex,
-      coordinates: selectedCells.map(c => [c.row, c.col]),
-      word: currentWord
-    });
+    try {
+      const response = await fetch('http://localhost:3001/api/selectWord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId,
+          playerIndex,
+          coordinates: selectedCells.map(c => [c.row, c.col]),
+          word: currentWord
+        })
+      });
+      const data = await response.json();
+      
+      // Procesar respuesta inmediata
+      if (data.success && data.points > 0) {
+        console.log('✅ Palabra encontrada:', data.word, data.points, 'pts');
+        // Actualizar palabras encontradas
+        setWords(prev => prev.map(w => 
+          w.word === data.word ? { ...w, foundBy: data.playerId } : w
+        ));
+        // Actualizar puntuación
+        setPlayers(prev => prev.map(p => 
+          p.id === data.playerId 
+            ? { ...p, score: p.score + data.points, foundWords: [...p.foundWords, data.word] }
+            : p
+        ));
+      }
+    } catch (e) {
+      console.error('Error selectWord:', e);
+    }
 
     setSelectedCells([]);
     setCurrentWord('');
   };
 
-  // Enviar mensaje de chat
-  const handleSendMessage = () => {
-    if (chatInput.trim()) {
-      socket.emit('chatMessage', {
-        gameId,
-        message: chatInput,
-        playerId: players[playerIndex]?.id,
-        nickname: players[playerIndex]?.nickname
+  // Enviar mensaje de chat (HTTP)
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+    try {
+      await fetch('http://localhost:3001/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId,
+          message: chatInput,
+          playerId: players[playerIndex]?.id,
+          nickname: players[playerIndex]?.nickname
+        })
       });
       setChatInput('');
+    } catch (e) {
+      console.error('Error chat:', e);
     }
   };
+
+  // Polling HTTP para recibir mensajes y resultados
+  useEffect(() => {
+    if (!gameId) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        // Obtener mensajes
+        const msgRes = await fetch(`http://localhost:3001/api/chat/${gameId}`);
+        const msgData = await msgRes.json();
+        if (msgData.messages) setChatMessages(msgData.messages);
+        
+        // Obtener resultado de palabra
+        const wordRes = await fetch(`http://localhost:3001/api/selectWord/${gameId}`);
+        const wordData = await wordRes.json();
+        
+        if (wordData && wordData.result && wordData.result.found) {
+          console.log('📬 Resultado palabra:', wordData.result);
+          
+          // Actualizar palabras encontradas
+          setWords(prev => prev.map(w => 
+            w.word === wordData.result.word ? { ...w, foundBy: wordData.result.playerId } : w
+          ));
+          // Actualizar puntuación
+          setPlayers(prev => prev.map(p => 
+            p.id === wordData.result.playerId 
+              ? { ...p, score: p.score + wordData.result.points, foundWords: [...p.foundWords, wordData.result.word] }
+              : p
+          ));
+        }
+      } catch (e) {
+        // Silencioso
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [gameId]);
 
   // Escuchar eventos del servidor
   useEffect(() => {
@@ -415,26 +501,58 @@ function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId })
     });
 
     socket.on('gameEnded', (data) => {
-      alert(`¡Juego terminado! Ganador: ${data.winner?.nickname || 'Nadie'} con ${data.winner?.score || 0} puntos`);
-      setScreen('lobby');
+      console.log('🎉 Juego terminado:', data);
+      setLocalGameEndedData(data);
     });
 
-    socket.on('chatMessage', (data) => {
-      setChatMessages(prev => [...prev, data]);
-    });
+    // Chat ahora via HTTP polling, no socket
 
     return () => {
       socket.off('wordFound');
       socket.off('playerFrozen');
       socket.off('timerUpdate');
       socket.off('gameEnded');
-      socket.off('chatMessage');
     };
   }, [players, playerIndex, gameId]);
 
   // Calcular palabras encontradas por el jugador actual
   const myFoundWords = players[playerIndex]?.foundWords || [];
   const remainingWords = words.filter(w => !w.foundBy).map(w => w.word);
+
+  // Pantalla de fin de juego
+  if (effectiveGameEndedData) {
+    return (
+      <div className="game-ended-overlay">
+        <div className="game-ended-modal">
+          <h1>🎉 ¡Juego Terminado!</h1>
+          <div className="winner-section">
+            <h2>Ganador: {effectiveGameEndedData.winner?.nickname || 'Nadie'}</h2>
+            <p className="winner-score">Puntos: {effectiveGameEndedData.winner?.score || 0}</p>
+          </div>
+          <div className="final-scores">
+            <h3>Puntuación Final:</h3>
+            {effectiveGameEndedData.finalScores?.map((p, idx) => (
+              <div key={idx} className="final-score-row">
+                <span>{p.nickname}</span>
+                <span>{p.score} pts</span>
+              </div>
+            ))}
+          </div>
+          {effectiveGameEndedData.stats && (
+            <div className="game-stats">
+              <p>Palabras encontradas: {effectiveGameEndedData.stats.wordsFound} / {effectiveGameEndedData.stats.totalWords}</p>
+              {effectiveGameEndedData.stats.longestWord && (
+                <p>Palabra más larga: {effectiveGameEndedData.stats.longestWord}</p>
+              )}
+            </div>
+          )}
+          <button className="abandonar-btn" onClick={onAbandonar}>
+            Regresar al Lobby
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="game-container">
@@ -456,6 +574,18 @@ function Game({ gameData, playerIndex, userSettings, onUpdateSettings, gameId })
         <div className="timer-display">
           ⏱️ {formatTime(timer)}
         </div>
+
+        {/* Botón de prueba para simular fin del juego */}
+        <button 
+          style={{marginTop: '10px', padding: '5px 10px', fontSize: '12px', background: '#ff6b6b', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}
+          onClick={() => setGameEndedData && setGameEndedData({
+            winner: { nickname: players[playerIndex]?.nickname || 'Jugador', score: players[playerIndex]?.score || 0 },
+            finalScores: players.map(p => ({ nickname: p.nickname, score: p.score })),
+            stats: { wordsFound: 10, totalWords: 10, longestWord: 'SERVIDOR' }
+          })}
+        >
+          🧪 Probar Fin de Juego
+        </button>
 
         <div className="word-marquee">
           <h3>📝 Palabras restantes</h3>
