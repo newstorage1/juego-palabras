@@ -645,3 +645,595 @@
   border-radius: 0.5rem;
   color: #666;
 }
+
+/* Game Screen V2 */
+.v2-game-screen {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+}
+
+.v2-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+}
+
+.v2-game-info {
+  display: flex;
+  gap: 1rem;
+}
+
+.game-code {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.game-timer {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.v2-game-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.player-score {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+}
+
+.player-score.me {
+  background: #e8eaff;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.btn-back {
+  padding: 0.5rem 1rem;
+  background: #e0e0e0;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.v2-game-content {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1rem;
+}
+
+.v2-game-main {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.v2-grid-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.v2-grid {
+  display: grid;
+  gap: 2px;
+  background: #e0e0e0;
+  padding: 2px;
+  border-radius: 0.5rem;
+}
+
+.v2-cell {
+  width: 40px;
+  height: 40px;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.v2-cell:hover {
+  background: #f5f5ff;
+}
+
+.v2-cell.selected {
+  background: #667eea;
+  color: white;
+}
+
+.v2-selected-word {
+  text-align: center;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.btn-confirm {
+  width: 100%;
+  padding: 1rem;
+  background: #48bb78;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-confirm:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.v2-game-sidebar {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.v2-words-list h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.words-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.word-item {
+  padding: 0.5rem;
+  background: #f5f5f5;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.word-item.found {
+  background: #c6f6d5;
+  text-decoration: line-through;
+  color: #666;
+}
+
+.v2-game-ended {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  max-width: 500px;
+  margin: 2rem auto;
+}
+
+.v2-game-ended .winner {
+  font-size: 1.25rem;
+  color: #667eea;
+  margin: 1rem 0;
+}
+
+/* Frozen Overlay */
+.frozen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.frozen-message {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.frozen-message h2 {
+  color: #e53e3e;
+}
+
+.frozen-message p {
+  font-size: 1.25rem;
+}
+
+/* Chat del Juego V2 */
+.v2-chat-section {
+  margin-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1rem;
+}
+
+.v2-chat-section h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.v2-chat-messages {
+  height: 150px;
+  overflow-y: auto;
+  background: #f9f9f9;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.v2-chat-messages .chat-msg {
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
+}
+
+.v2-chat-messages .chat-msg strong {
+  color: #667eea;
+}
+
+.v2-chat-input {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.v2-chat-input input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.25rem;
+}
+
+.v2-chat-input button {
+  padding: 0.5rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+/* Header del Juego V2 */
+.game-header-v2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.game-code-header {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.game-layout-v2 {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Game Container V2 - Igual a V1 */
+.game-container-v2 {
+  display: flex;
+  min-height: calc(100vh - 80px);
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.game-sidebar-v2 {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scoreboard-v2 {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.scoreboard-v2 h3 {
+  margin-bottom: 1rem;
+  color: #667eea;
+}
+
+.player-score-v2 {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.player-score-v2.active {
+  border-left: 4px solid #667eea;
+}
+
+.timer-display-v2 {
+  text-align: center;
+  padding: 1rem;
+  background: #667eea;
+  color: white;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.board-container-v2 {
+  flex: 2;
+  min-width: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.board-v2 {
+  display: grid;
+  gap: 2px;
+  background: #e0e0e0;
+  padding: 2px;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  user-select: none;
+}
+
+.cell-v2 {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  font-weight: bold;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.cell-v2:hover {
+  background: #f0f0ff;
+}
+
+.cell-v2.selected {
+  background: #667eea;
+  color: white;
+}
+
+.cell-v2.found {
+  background: #48bb78;
+  color: white;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.cell-v2.found {
+  animation: pop 0.3s ease;
+}
+
+.word-marquee-v2 {
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.word-marquee-v2 h3 {
+  margin-bottom: 1rem;
+  color: #667eea;
+}
+
+.marquee-content-v2 {
+  display: flex;
+  gap: 1rem;
+}
+
+.word-tag-v2 {
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  border-radius: 2rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Palabras encontradas por mí - Verde */
+.word-tag-v2.found-by-me {
+  background: #48bb78;
+  color: white;
+  text-decoration: line-through;
+  transform: scale(0.95);
+  animation: word-found 0.3s ease;
+}
+
+/* Palabras encontradas por otro jugador - Gris */
+.word-tag-v2.found-by-other {
+  background: #999;
+  color: white;
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+@keyframes word-found {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.chat-container-v2 {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages-v2 {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 200px;
+  margin-bottom: 0.5rem;
+}
+
+.chat-message-v2 {
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.chat-message-v2 strong {
+  color: #667eea;
+}
+
+.chat-input-v2 {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-v2 input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+}
+
+.chat-input-v2 button {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.confirm-button-v2 {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+}
+
+.confirm-button-v2 .btn {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-button-v2 .btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Game Ended Overlay V2 */
+.game-ended-overlay-v2 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.game-ended-modal {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 400px;
+  text-align: center;
+}
+
+.game-ended-modal h1 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.winner-section {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.winner-section h2 {
+  margin: 0;
+  color: #667eea;
+}
+
+.winner-score {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0.5rem 0 0 0;
+}
+
+.final-scores {
+  margin: 1rem 0;
+}
+
+.final-scores h3 {
+  color: #666;
+}
+
+.final-score-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.game-stats {
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.game-stats p {
+  margin: 0.25rem 0;
+  color: #666;
+}
+
+.abandonar-btn {
+  padding: 1rem 2rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.abandonar-btn:hover {
+  background: #5568d3;
+}

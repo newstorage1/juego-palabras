@@ -208,7 +208,9 @@ function handleSocketEvents(io) {
       
       io.to(gameId).emit('gameStarted', {
         players: game.players,
-        settings: game.settings
+        settings: game.settings,
+        grid: game.grid,
+        words: game.words
       });
       
       saveGame(gameId, game);

@@ -88,9 +88,11 @@ const wordSelectResults = {};
 app.post('/api/selectWord', (req, res) => {
   try {
     const { gameId, playerIndex, coordinates, word } = req.body;
-    console.log("📥 selectWord:", req.body);
+    console.log("📥 selectWord RECIBIDO:", req.body);
+    console.log("📥 URL llamada:", req.originalUrl);
     
     if (!gameId || !word) {
+      console.log("❌ Datos incompletos - gameId:", gameId, "word:", word);
       return res.status(400).json({ error: 'Datos incompletos' });
     }
     
@@ -98,6 +100,8 @@ app.post('/api/selectWord', (req, res) => {
     const { validateSelection, calculatePoints } = require('./gameLogic');
     
     if (!games[gameId]) {
+      console.log("❌ Partida no encontrada:", gameId);
+      console.log("📋 Partidas existentes:", Object.keys(games));
       return res.status(404).json({ error: 'Partida no encontrada' });
     }
     
@@ -161,6 +165,7 @@ app.post('/api/selectWord', (req, res) => {
       coordinates
     });
     
+    console.log("✅ Respuesta enviada:", { success: true, points, word });
     res.json({ 
       success: true, 
       points,
@@ -178,7 +183,7 @@ app.post('/api/selectWord', (req, res) => {
     wordSelectResults[gameId] = game.lastWordResult;
     
     res.json({ success: false, error: validation.message });
-    }
+  }
   } catch (error) {
     console.error('❌ Error en selectWord:', error);
     res.status(500).json({ error: 'Error interno del servidor' });

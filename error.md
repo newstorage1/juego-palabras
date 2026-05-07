@@ -1,23 +1,13 @@
-Conectado al socket
-LobbyMultijugador.jsx:179 Iniciando juego: SOPA-HJ9 socket.id= ywxSY7Nsf_35XKuRAAAV
-LobbyMultijugador.jsx:55 🎮 gameStarted recibido: {players: Array(2), settings: {…}}players: (2) [{…}, {…}]settings: {gridSize: 15, theme: 'default', language: 'es', timeLimitMinutes: 15, mode: 'solo'}[[Prototype]]: Object
-LobbyMultijugador.jsx:66 ⚠️ No se puede iniciar - currentGame: null
-LobbyMultijugador.jsx:179 Iniciando juego: SOPA-HJ9 socket.id= ywxSY7Nsf_35XKuRAAAV
-LobbyMultijugador.jsx:55 🎮 gameStarted recibido: {players: Array(2), settings: {…}}
-LobbyMultijugador.jsx:66 ⚠️ No se puede iniciar - currentGame: null
-
-# se unio 
-Conectado al socket
-LobbyMultijugador.jsx:55 🎮 gameStarted recibido: Object
-LobbyMultijugador.jsx:66 ⚠️ No se puede iniciar - currentGame: null
-LobbyMultijugador.jsx:55 🎮 gameStarted recibido: Objectplayers: (2) [{…}, {…}]settings: {gridSize: 15, theme: 'default', language: 'es', timeLimitMinutes: 15, mode: 'solo'}[[Prototype]]: Object
-LobbyMultijugador.jsx:66 ⚠️ No se puede iniciar - currentGame: null
-
-# CONSOLA 
-[0] Usuario conectado: NkcWX8AUlN-wdaCPAAAS
-[0] Usuario conectado: ywxSY7Nsf_35XKuRAAAV
-[0] Usuario joined to lobby
-[0] 📩 startGame recibido: SOPA-HJ9 por socket: ywxSY7Nsf_35XKuRAAAV
-[0] 📋 Estado actual: waiting Jugadores: 2
-[0] 📩 startGame recibido: SOPA-HJ9 por socket: ywxSY7Nsf_35XKuRAAAV
-[0] 📋 Estado actual: playing Jugadores: 2
+ /home/hector/hub/Juego-Node opencode/server/socketHandlers.js:149
+[0]           return callback({ success: false, error: 'Partida no encontrada' });
+[0]                  ^
+[0] 
+[0] TypeError: callback is not a function
+[0]     at Socket.<anonymous> (/home/hector/hub/Juego-Node opencode/server/socketHandlers.js:149:18)
+[0]     at Socket.emit (node:events:524:28)
+[0]     at Socket.emitUntyped (/home/hector/hub/Juego-Node opencode/node_modules/socket.io/dist/typed-events.js:69:22)
+[0]     at /home/hector/hub/Juego-Node opencode/node_modules/socket.io/dist/socket.js:697:39
+[0]     at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+[0] 
+[0] Node.js v20.19.2
+[0] [nodemon] app crashed - waiting for file changes before starting...

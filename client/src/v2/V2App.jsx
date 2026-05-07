@@ -2,17 +2,30 @@ import React, { useState, useEffect } from 'react';
 import PreLobby from './PreLobby';
 import LobbyIndividual from './LobbyIndividual';
 import LobbyMultijugador from './LobbyMultijugador';
+import GameScreen from './GameScreen';
 import './V2.css';
 
 export default function V2App() {
   const [userData, setUserData] = useState(null);
   const [screen, setScreen] = useState('prelobby');
   const [gameData, setGameData] = useState(null);
+  const [currentGameId, setCurrentGameId] = useState(null);
+  const [playerIndex, setPlayerIndex] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem('v2_userData');
     if (saved) {
       setUserData(JSON.parse(saved));
+    }
+    
+    const savedGame = localStorage.getItem('v2_currentGame');
+    if (savedGame) {
+      const gameInfo = JSON.parse(savedGame);
+      setCurrentGameId(gameInfo.gameId);
+      setGameData(gameInfo.gameData);
+      setPlayerIndex(gameInfo.playerIndex || 0);
+      setScreen('game');
+    } else {
       setScreen('lobby');
     }
   }, []);
@@ -25,18 +38,32 @@ export default function V2App() {
 
   const handleLogout = () => {
     setUserData(null);
+    setGameData(null);
+    setCurrentGameId(null);
     setScreen('prelobby');
     localStorage.removeItem('v2_userData');
+    localStorage.removeItem('v2_currentGame');
   };
 
-  const handleStartGame = (gameId, data, playerIndex) => {
+  const handleStartGame = (gameId, data, pIndex) => {
+    console.log('handleStartGame - gameId:', gameId, 'data:', data, 'playerIndex:', pIndex);
+    setCurrentGameId(gameId);
     setGameData(data);
+    setPlayerIndex(pIndex || 0);
     setScreen('game');
+    
+    localStorage.setItem('v2_currentGame', JSON.stringify({
+      gameId,
+      gameData: data,
+      playerIndex: pIndex || 0
+    }));
   };
 
   const handleBackToLobby = () => {
     setGameData(null);
+    setCurrentGameId(null);
     setScreen('lobby');
+    localStorage.removeItem('v2_currentGame');
   };
 
   if (screen === 'prelobby' || !userData) {
@@ -45,25 +72,13 @@ export default function V2App() {
 
   if (screen === 'game' && gameData) {
     return (
-      <div className="v2-game">
-        <div className="v2-game-header">
-          <h1>🎮 Sopa de Letras - Versión 2</h1>
-          <button className="v2-logout" onClick={handleBackToLobby}>Volver al Lobby</button>
-        </div>
-        <div className="v2-game-content">
-          <h2>🏆 ¡Bienvenidos Jugadores!</h2>
-          <div className="players-list">
-            {gameData.players.map((player, idx) => (
-              <div key={idx} className="player-item">
-                <span className="player-avatar">{player.avatar}</span>
-                <span className="player-name">{player.nickname}</span>
-                {idx === 0 && <span className="player-badge">Creador</span>}
-              </div>
-            ))}
-          </div>
-          <p className="game-info-text">El juego está comenzando...</p>
-        </div>
-      </div>
+      <GameScreen 
+        gameId={currentGameId}
+        gameData={gameData}
+        playerIndex={playerIndex}
+        userData={userData}
+        onBack={handleBackToLobby}
+      />
     );
   }
 

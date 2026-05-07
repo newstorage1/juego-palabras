@@ -482,6 +482,60 @@ Entra al Lobby Multijugador (Sala de Espera)
 
 ---
 
+## 🎮 Cómo Funciona la Mecánica del Juego
+
+### Flujo cuando un jugador encuentra una palabra:
+
+1. **Selección de letras**: El jugador arrastra o hace clic en las celdas del tablero para formar una palabra
+2. **Confirmar**: El jugador presiona el botón "Confirmar"
+3. **Validación del servidor**: 
+   - El servidor valida que la palabra exista en las coordenadas seleccionadas
+   - Usa `validateSelection()` para verificar
+4. **Cálculo de puntos**:
+   ```
+   - 1-4 letras: 1 punto
+   - 5-7 letras: 2 puntos
+   - 8+ letras: 3 puntos
+   ```
+5. **Actualización en tiempo real**:
+   - El servidor emite evento `wordFound` a TODOS los jugadores
+   - Cada cliente actualiza su estado local
+6. **Polling**: Cada 1 segundo, el cliente hace polling a `/api/selectWord/{gameId}` para recibir resultados de otros jugadores
+
+### Visualización de palabras encontradas:
+
+| Estado | Color | Significado |
+|--------|-------|-------------|
+| **Pendiente** | Gris claro | La palabra aún no ha sido encontrada |
+| **Encontrada por mí** | Verde (#48bb78) | Yo encontré esta palabra |
+| **Encontrada por otro** | Gris (#999) | Otro jugador la encontró primero |
+
+### Actualización de puntuación:
+
+- La puntuación se actualiza tanto por respuesta inmediata como por polling
+- Todos los jugadores ven la puntuación actualizada en el scoreboard
+- El servidor envía el array de `players` actualizado en cada evento
+
+### Sistema de congelamiento:
+
+- Si un jugador fallan 3 palabras consecutivas, queda congelado por 5 segundos
+- Durante ese tiempo no puede interactuar con el tablero
+- Se muestra un overlay con temporizador
+
+### Condición de victoria:
+
+- **Modo Individual**: Encontrar el 100% de las palabras
+- **Modo Multijugador**: Encontrar el 51% de las palabras
+- Cuando se alcanza, el servidor ejecuta `endGame()` y emite `gameEnded` a todos los jugadores
+
+### Chat del juego:
+
+- Funciona mediante HTTP polling (cada 1 segundo)
+- Los mensajes se almacenan en memoria en el servidor
+- Cualquier jugador en la partida puede enviar y ver mensajes
+
+---
+
 ## 🎯 Funcionalidades Implementadas
 
 1. ✅ Sistema de UI para selección (botón Confirmar)

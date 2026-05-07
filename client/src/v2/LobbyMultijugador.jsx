@@ -63,9 +63,12 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame }) {
       // Usar ref o estado
       const gameInfo = currentGameRef.current || currentGame;
       
+      // Calcular el índice del jugador actual
+      const playerIdx = data.players?.findIndex(p => p.id === newSocket.id) || 0;
+      
       if (onStartGame && gameInfo && gameInfo.gameId) {
-        console.log('➡️ Llamando onStartGame con gameId:', gameInfo.gameId);
-        onStartGame(gameInfo.gameId, data, newSocket.id);
+        console.log('➡️ Llamando onStartGame con gameId:', gameInfo.gameId, 'playerIndex:', playerIdx);
+        onStartGame(gameInfo.gameId, data, playerIdx);
       } else {
         console.log('⚠️ No se puede iniciar - gameInfo:', gameInfo);
         gameStartedHandled = false;
