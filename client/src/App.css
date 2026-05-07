@@ -683,3 +683,370 @@ body {
   transform: scale(1.05);
   box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
 }
+
+/* Pre-lobby */
+.prelobby {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 2rem;
+}
+
+.prelobby-card {
+  background: var(--bg-color);
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.prelobby-card h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.prelobby-card .form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.prelobby-card label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 1.1rem;
+}
+
+.prelobby-card input {
+  width: 100%;
+  padding: 1rem 1.2rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1.1rem;
+  background: var(--input-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s;
+}
+
+.prelobby-card input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Avatar selector */
+.avatar-selector {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.avatar-option {
+  font-size: 2rem;
+  padding: 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-color);
+}
+
+.avatar-option:hover {
+  transform: scale(1.1);
+}
+
+.avatar-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+}
+
+.mode-selector {
+  display: flex;
+  gap: 1rem;
+}
+
+.mode-selector button {
+  flex: 1;
+  padding: 1.2rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-selector button.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+}
+
+.info-message {
+  background: #fff3cd;
+  color: #856404;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.enter-btn {
+  width: 100%;
+  padding: 1.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.enter-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.enter-btn:not(:disabled):hover {
+  transform: scale(1.02);
+}
+
+.player-stats-mini {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.player-stats-mini span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Lobby Multiplayer */
+.lobby-multiplayer {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.multiplayer-main {
+  flex: 1;
+}
+
+.multiplayer-card {
+  background: var(--bg-color);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.multiplayer-card h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.info-text {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.multiplayer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.join-section {
+  display: flex;
+  gap: 1rem;
+}
+
+.join-section input {
+  flex: 1;
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--input-bg);
+  color: var(--text-color);
+}
+
+.join-section input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.game-code-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  color: white;
+}
+
+.code-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.code-value {
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.code-hint {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.start-game-btn {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border: none;
+  border-radius: 15px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.start-game-btn:hover {
+  transform: scale(1.02);
+}
+
+.multiplayer-instructions {
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 15px;
+}
+
+.multiplayer-instructions h4 {
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.multiplayer-instructions ol {
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.multiplayer-instructions li {
+  margin-bottom: 0.5rem;
+}
+
+/* Chat del Lobby Multiplayer */
+.multiplayer-chat {
+  width: 350px;
+  background: var(--bg-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+}
+
+.chat-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.chat-empty {
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.chat-message {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+.msg-nickname {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.msg-text {
+  color: var(--text-color);
+}
+
+.msg-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  width: 100%;
+  text-align: right;
+}
+
+.chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text-color);
+}
+
+.chat-input button {
+  padding: 0.8rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.chat-input button:hover {
+  opacity: 0.9;
+}

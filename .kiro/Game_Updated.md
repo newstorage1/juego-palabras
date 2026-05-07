@@ -130,6 +130,11 @@
 
 ## 🏗️ Arquitectura Técnica Actualizada
 
+### Puertos de Desarrollo:
+- **Puerto 3001**: Servidor Node.js/Express (API REST + Socket.io)
+- **Puerto 3000**: Cliente React (dev server de create-react-app)
+- **Proxy**: El cliente tiene configurado un proxy en `client/package.json` que redirige las llamadas a `/api/*` hacia `http://localhost:3001`
+
 ### Backend:
 - **Node.js** con **Express.js**
 - **Socket.io** para comunicación en tiempo real
@@ -177,30 +182,82 @@
 
 ### **1. Pantalla de Entrada (Pre-lobby)**
 
-Esta es la primera pantalla que ve el usuario al entrar al juego:
+El **Pre-lobby** es la pantalla inicial de registro donde el usuario crea su perfil para acceder al juego. Es el punto de entrada obligatorio antes de acceder a cualquier modo de juego.
 
-- **Campo Nickname**: El usuario ingresa su apodo (obligatorio, 3-15 caracteres)
-- **Campo Edad**: El usuario ingresa su edad (obligatorio, 1-120 años)
-  - **Restricción**: Si es menor de 13 años: Solo puede jugar en modo individual
-  - Si es mayor de 13 años: Puede elegir entre individual o multijugador
-- **Selector de Modo de Juego** (solo si tiene 13 años o más):
-  - 🔵 **Modo Individual**: Juega solo contra el tiempo
-  - 🟢 **Modo Multijugador**: Juega con otros jugadores en línea
-- **Botón "Entrar"**: Valida los datos y dirige al lobby correspondiente
+#### Campos del Formulario:
+
+| Campo | Tipo | Descripción | Validación |
+|-------|------|-------------|-------------|
+| **Nickname** | Texto | Apodo del jugador (identificador en el juego) | Obligatorio, 3-15 caracteres |
+| **Edad** | Número | Edad del jugador | Obligatorio, 1-120 años |
+| **Avatar** | Selector visual | Icono que representa al jugador | Opcional, emoji predefinido |
+| **Tipo de Juego** | Selector | Modalidad de juego a jugar | Obligatorio, según edad |
+
+#### Restricciones por Edad:
+
+- **Menores de 13 años**: Solo pueden jugar en **modo individual**. La opción multijugador se deshabilita y muestra un mensaje informativo.
+- **13 años o más**: Pueden elegir entre **modo individual** o **modo multijugador**.
+
+#### Modos de Juego:
+
+- 🔵 **Modo Individual**: El jugador participa solo contra el tiempo, buscando todas las palabras en el tablero.
+- 🟢 **Modo Multijugador**: El jugador se une a una sala de espera donde puede crear o unirse a partidas con otros jugadores en línea.
+
+#### Persistencia del Usuario:
+
+- El perfil del usuario se guarda en `localStorage` del navegador
+- Mientras el navegador permanezca abierto, el usuario mantiene su sesión activa
+- Al cerrar o refrescar la página, los datos del usuario se eliminan
+- Al volver a entrar, el usuario debe completar el pre-lobby nuevamente como un jugador nuevo
+
+#### Estadísticas del Usuario:
+
+El perfil del usuario además de los datos básicos (nickname, edad, avatar, modo de juego) también mantiene un registro histórico de su desempeño:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| **partidasGanadas** | Número | Cantidad total de partidas que el usuario ha ganado |
+| **mejorPuntaje** | Número | El puntaje más alto alcanzado en una sola partida |
+
+Estas estadísticas se actualizan cada vez que el usuario completa una partida:
+- Al finalizar una partida, si el usuario resultó ganador, se incrementa `partidasGanadas`
+- Al finalizar cualquier partida, si el puntaje obtenido es mayor al `mejorPuntaje` actual, se actualiza este valor
+- Las estadísticas persisten en `localStorage` junto con los datos del perfil
 
 #### Validaciones:
-- Nickname no puede estar vacío
-- Edad debe ser un número válido
+
+- Nickname no puede estar vacío ni tener menos de 3 o más de 15 caracteres
+- Edad debe ser un número válido entre 1 y 120 años
 - Si edad < 13: Deshabilitar opción multijugador y mostrar mensaje informativo
+- Todos los campos obligatorios deben completarse antes de poder entrar
+
+### **Lobby**
+
+Según la opción que seleccionó el jugador en el Pre-lobby, cargará una de estas dos opciones:
 
 ### **2. Lobby - Modo Individual**
 
 (Si选择了Individual o tiene menos de 13 años)
 
-- **Crear Partida**: Genera código único (ej. SOPA-X92)
-- **Unirse a Partida**: Campo para introducir código
-- **Selector de Dificultad**: Tamaño de cuadrícula y temática
+El Lobby es la pantalla principal donde el jugador gestiona sus partidas. Según la opción seleccionada en el Pre-lobby, se carga uno de los siguientes modos:
+
+#### Opciones de Configuración de Partida:
+
+- **Selector de Dificultad**: Tamaño de cuadrícula (Fácil 10x10, Medio 15x15, Difícil 20x20)
 - **Selector de Idioma**: Español o Inglés
+- **Selecciona tu Tema**: Opción para elegir el tema visual del juego (Claro, Oscuro, Neón, Natural, etc.)
+
+#### Acciones Disponibles:
+
+##### Crear Partida:
+- **Idioma**: Selector del idioma de las palabras
+- **Dificultad**: Selector del tamaño del tablero
+- **Botón "Crear Partida"**: Al presionarlo, genera un código único de partida (ej. SOPA-X92)
+
+##### Unirse a Partida:
+- **Campo "Código de Partida"**: Formulario para introducir el código de la partida a la que se desea unir
+- **Botón "Unirse a Partida"**: Al presionarlo, valida el código y une al jugador a la partida
+
 - **Solicitar Temario con IA**: Botón para pedir palabras personalizadas
 - **Botón "Iniciar Juego"**: Comienza la partida individualmente
 
@@ -208,20 +265,36 @@ Esta es la primera pantalla que ve el usuario al entrar al juego:
 
 (Si选择了Multijugador y tiene 13 años o más)
 
-El lobby de multijugador funciona como una **sala de espera con chat**:
+El Lobby Multijugador funciona como una **sala de espera global** donde todos los jugadores conectados pueden interactuar antes de entrar a una partida específica.
 
-#### Zona de Chat Público:
-- **Chat en tiempo real**: Los usuarios pueden coordinada y	charlar
-- **Indicación de usuarios conectados**: Muestra quién está en la sala
-- **Sistema de creación de partida**:
-  - Cualquier jugador puede crear una sesión presionando "Crear Partida"
-  - Se genera un código único (ej. SOPA-X92)
-  - El creador puede compartir este código via chat
+#### Características del Lobby Global:
 
-#### Unirse a Partida (ya implementado):
-- **Campo para código**: Campo visible donde se puede ingresar el código de la partida
-- **Botón "Unirse"**: Botón para confirmar ingreso a la partida
-- **Lista de espera**: Muestra los jugadores que se han unido a la partida
+- **Chat Global en Tiempo Real**: Todos los jugadores conectados a la sala de espera pueden escribir y ver los mensajes de todos los demás. No existe un chat privado; todo el mundo comparte el mismo espacio de conversación.
+- **Historial de mensajes**: Los mensajes anteriores persisten y cualquier nuevo jugador que ingrese puede ver todo el historial de conversación
+- **Indicación de usuarios conectados**: Muestra quién está en la sala de espera
+
+#### Opciones de Configuración (para crear partida):
+
+- **Selector de Dificultad**: Tamaño de cuadrícula (Fácil 10x10, Medio 15x15, Difícil 20x20)
+- **Selector de Idioma**: Español o Inglés
+- **Selecciona tu Tema**: Opción para elegir el tema visual del juego
+
+#### Acciones Disponibles:
+
+##### Crear Partida:
+- **Idioma**: Selector del idioma de las palabras
+- **Dificultad**: Selector del tamaño del tablero
+- **Botón "Crear Partida"**: Al presionarlo, genera un código único de partida (ej. SOPA-X92)
+- **Notificación en Chat**: Al crear la partida, el sistema envía automáticamente un mensaje al chat global indicando: "El jugador [Nickname] ha creado la sala [Código]" para que todos puedan verlo
+
+##### Unirse a Partida:
+- **Campo "Código de Partida"**: Formulario para introducir el código de la partida a la que se desea unir
+- **Botón "Unirse a Partida"**: Al presionarlo, valida el código y une al jugador a la partida
+- **Notificación en Chat**: Al unirse a una partida, el sistema envía automáticamente un mensaje al chat global indicando: "El jugador [Nickname] se ha unido a la sala [Código]" para que todos puedan verlo
+
+#### Lista de Espera de la Partida:
+
+- **Lista de jugadores**: Muestra los jugadores que se han unido a una partida específica
 - **Estado de preparación**: Cada jugador debe confirmar que está listo
 
 #### Control del Juego:
@@ -231,10 +304,11 @@ El lobby de multijugador funciona como una **sala de espera con chat**:
 
 #### Información Mostrada:
 - Código de la partida (para compartir)
-- Lista de jugadores conectados
+- Lista de jugadores conectados al lobby global
+- Lista de jugadores en cada partida específica
 - Contador de jugadores listos
-- Botón "Crear Partida" (para cualquier jugador)
-- **Botón "Unirse" con campo de código** (ya implementado)
+- Botón "Crear Partida" (para cualquier jugador en el lobby)
+- Botón "Unirse a Partida" con campo de código
 - Botón "Iniciar Juego" (solo visible para el creador de la partida)
 
 ---

@@ -41,10 +41,49 @@ function initializeFromSavedGames() {
   }
 }
 
+// Chat del Lobby Multijugador (sala de espera global)
+let lobbyChatMessages = []; // Mensajes persistentes del lobby
+
 // Eventos de Socket.io
 function handleSocketEvents(io) {
   io.on('connection', (socket) => {
     console.log('Usuario conectado:', socket.id);
+    
+    // Unirse al room del lobby multiplayer
+    socket.on('joinLobby', () => {
+      socket.join('lobby');
+      // Enviar mensajes anteriores del lobby
+      socket.emit('lobbyChatHistory', lobbyChatMessages);
+      console.log('Usuario joined to lobby');
+    });
+    
+    // Enviar mensaje al chat del lobby
+    socket.on('lobbyChatMessage', (data) => {
+      const message = {
+        nickname: data.nickname,
+        avatar: data.avatar,
+        message: data.message,
+        time: new Date().toLocaleTimeString()
+      };
+      lobbyChatMessages.push(message);
+      // Limitar a últimos 50 mensajes
+      if (lobbyChatMessages.length > 50) {
+        lobbyChatMessages = lobbyChatMessages.slice(-50);
+      }
+      //广播 a todos en el lobby
+      io.to('lobby').emit('lobbyChatMessage', message);
+    });
+    
+    // Unirse a sala como creador (para api REST)
+    socket.on('joinGameRoom', (data) => {
+      const { gameId, nickname } = data;
+      socket.join(gameId);
+      // Notificar al otro jugador
+      socket.to(gameId).emit('playerJoinedGame', {
+        nickname,
+        playerCount: 2
+      });
+    });
     
     // Crear partida
     socket.on('createGame', (userData, callback) => {
@@ -158,7 +197,7 @@ function handleSocketEvents(io) {
       game.startTime = Date.now();
       
       // Iniciar temporizador
-      startTimer(gameId);
+      startTimer(gameId, io);
       
       io.to(gameId).emit('gameStarted', {
         players: game.players,
@@ -333,7 +372,7 @@ function handleSocketEvents(io) {
 }
 
 // Temporizador
-function startTimer(gameId) {
+function startTimer(gameId, io) {
   const game = games[gameId];
   if (!game) return;
   
@@ -342,7 +381,9 @@ function startTimer(gameId) {
   game.timer = setInterval(() => {
     timeLeft--;
     
-    io.to(gameId).emit('timerUpdate', { timeLeft });
+    if (io) {
+      io.to(gameId).emit('timerUpdate', { timeLeft });
+    }
     
     if (timeLeft <= 0) {
       clearInterval(game.timer);

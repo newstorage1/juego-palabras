@@ -12,7 +12,17 @@ if (!fs.existsSync(GAMES_DIR)) {
 function saveGame(gameId, gameData) {
   const filePath = path.join(GAMES_DIR, `${gameId}.json`);
   try {
-    fs.writeFileSync(filePath, JSON.stringify(gameData, null, 2));
+    // Crear copia sin propiedades no serializables
+    const cleanData = { ...gameData };
+    delete cleanData.timer; // Eliminar el timer (objeto no serializable)
+    if (cleanData.players) {
+      cleanData.players = cleanData.players.map(p => {
+        const cleanPlayer = { ...p };
+        delete cleanPlayer.frozenUntil; // Eliminar fechas de congelamiento
+        return cleanPlayer;
+      });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(cleanData, null, 2));
     return true;
   } catch (error) {
     console.error(`Error guardando partida ${gameId}:`, error);

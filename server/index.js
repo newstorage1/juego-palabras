@@ -6,6 +6,7 @@ const path = require('path');
 const { handleSocketEvents, initializeFromSavedGames, games } = require('./socketHandlers');
 const { endGame } = require('./socketHandlers');
 const { saveGame } = require('./persistence');
+const v2Routes = require('./routes/v2');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,11 +24,32 @@ app.use(express.json());
 // Servir archivos estáticos del cliente (modo desarrollo)
 app.use(express.static(path.join(__dirname, '../client/public')));
 app.use(express.static(path.join(__dirname, '../client/src')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Rutas estáticas para el cliente
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/public/index.html'));
 });
+
+// Ruta versión 2
+app.get('/version2', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/public/v2.html'));
+});
+
+app.get('/v2/prelobby', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/prelobby.html'));
+});
+
+app.get('/v2/lobby', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/lobby.html'));
+});
+
+// Archivos estáticos para versión 2 (sirve los .jsx y .css directamente)
+app.use('/version2', express.static(path.join(__dirname, '../client/src/version2')));
+app.use('/version2', express.static(path.join(__dirname, '../client/public')));
+
+// Rutas versión 2 API
+app.use('/version2/api', v2Routes);
 
 // Configuración
 const PORT = process.env.PORT || 3001;

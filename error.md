@@ -1,55 +1,36 @@
-Uncaught runtime errors:
-×
-ERROR
-setGrid is not defined
-ReferenceError: setGrid is not defined
-    at handleAbandonar (http://localhost:3000/static/js/bundle.js:65:5)
-    at HTMLUnknownElement.callCallback (http://localhost:3000/static/js/bundle.js:6705:18)
-    at Object.invokeGuardedCallbackDev (http://localhost:3000/static/js/bundle.js:6749:20)
-    at invokeGuardedCallback (http://localhost:3000/static/js/bundle.js:6806:35)
-    at invokeGuardedCallbackAndCatchFirstError (http://localhost:3000/static/js/bundle.js:6820:29)
-    at executeDispatch (http://localhost:3000/static/js/bundle.js:10963:7)
-    at processDispatchQueueItemsInOrder (http://localhost:3000/static/js/bundle.js:10989:11)
-    at processDispatchQueue (http://localhost:3000/static/js/bundle.js:11000:9)
-    at dispatchEventsForPlugins (http://localhost:3000/static/js/bundle.js:11009:7)
-    at http://localhost:3000/static/js/bundle.js:11169:16
-ERROR
-setGrid is not defined
-ReferenceError: setGrid is not defined
-    at handleAbandonar (http://localhost:3000/static/js/bundle.js:65:5)
-    at HTMLUnknownElement.callCallback (http://localhost:3000/static/js/bundle.js:6705:18)
-    at Object.invokeGuardedCallbackDev (http://localhost:3000/static/js/bundle.js:6749:20)
-    at invokeGuardedCallback (http://localhost:3000/static/js/bundle.js:6806:35)
-    at invokeGuardedCallbackAndCatchFirstError (http://localhost:3000/static/js/bundle.js:6820:29)
-    at executeDispatch (http://localhost:3000/static/js/bundle.js:10963:7)
-    at processDispatchQueueItemsInOrder (http://localhost:3000/static/js/bundle.js:10989:11)
-    at processDispatchQueue (http://localhost:3000/static/js/bundle.js:11000:9)
-    at dispatchEventsForPlugins (http://localhost:3000/static/js/bundle.js:11009:7)
-    at http://localhost:3000/static/js/bundle.js:11169:16
+# Error en consola 
+react-scripts start                                                                                                                          
+[1]                                                                                             
+[0] /home/hector/hub/Juego-Node opencode/server/socketHandlers.js:372                                                                              
+[0]   });                                                                                                           
+[0]    ^                                                                                                        
+[0]                                                                                             
+[0] SyntaxError: Unexpected token ')'                                                                                                              
+[0]     at wrapSafe (node:internal/modules/cjs/loader:1472:18)
+[0]     at Module._compile (node:internal/modules/cjs/loader:1501:20)
+[0]     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+[0]     at Module.load (node:internal/modules/cjs/loader:1275:32)
+[0]     at Module._load (node:internal/modules/cjs/loader:1096:12)
+[0]     at Module.require (node:internal/modules/cjs/loader:1298:19)
+[0]     at require (node:internal/modules/helpers:182:18)
+[0]     at Object.<anonymous> (/home/hector/hub/Juego-Node opencode/server/index.js:6:65)
+[0]     at Module._compile (node:internal/modules/cjs/loader:1529:14)
+[0]     at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+[0] 
+[0] Node.js v20.19.2
+[0] [nodemon] app crashed - waiting for file changes before starting...
+[1] (node:12637) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+[1] (Use `node --trace-deprecation ...` to show where the warning was created)
+[1] (node:12637) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
 
 
+# Errores en el navegador
 
-    # 
-    
-    Uncaught ReferenceError: setGrid is not defined
-    at handleAbandonar (App.js:38:1)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:4164:1)
-    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:1)
-    at invokeGuardedCallback (react-dom.development.js:4277:1)
-    at invokeGuardedCallbackAndCatchFirstError (react-dom.development.js:4291:1)
-    at executeDispatch (react-dom.development.js:9041:1)
-    at processDispatchQueueItemsInOrder (react-dom.development.js:9073:1)
-    at processDispatchQueue (react-dom.development.js:9086:1)
-    at dispatchEventsForPlugins (react-dom.development.js:9097:1)
-    at react-dom.development.js:9288:1Understand this error
-react-dom.development.js:4312 Uncaught ReferenceError: setGrid is not defined
-    at handleAbandonar (App.js:38:1)
-    at HTMLUnknownElement.callCallback (react-dom.development.js:4164:1)
-    at Object.invokeGuardedCallbackDev (react-dom.development.js:4213:1)
-    at invokeGuardedCallback (react-dom.development.js:4277:1)
-    at invokeGuardedCallbackAndCatchFirstError (react-dom.development.js:4291:1)
-    at executeDispatch (react-dom.development.js:9041:1)
-    at processDispatchQueueItemsInOrder (react-dom.development.js:9073:1)
-    at processDispatchQueue (react-dom.development.js:9086:1)
-    at dispatchEventsForPlugins (react-dom.development.js:9097:1)
-    at react-dom.development.js:9288:1Understand this error
+Uncaught ReferenceError: showCreate is not defined
+    at HTMLButtonElement.onclick (lobby:162:61)Understand this error
+lobby:182 Uncaught ReferenceError: createGame is not defined
+    at HTMLButtonElement.onclick (lobby:182:95)
+
+
+    lobby:163 Uncaught ReferenceError: showJoin is not defined
+    at HTMLButtonElement.onclick (lobby:163:50)

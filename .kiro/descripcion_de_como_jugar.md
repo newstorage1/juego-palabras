@@ -1,4 +1,3 @@
-# Cómo Jugar - Sopa de Letras Competitiva
 
 ## 🎮 Objetivo del Juego
 
