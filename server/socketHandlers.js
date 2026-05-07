@@ -190,9 +190,16 @@ function handleSocketEvents(io) {
     
     // Iniciar partida
     socket.on('startGame', (gameId) => {
-      if (!games[gameId]) return;
+      console.log('📩 startGame recibido:', gameId, 'por socket:', socket.id);
+      if (!games[gameId]) {
+        console.log('❌ Partida no encontrada:', gameId);
+        console.log('Partidas en memoria:', Object.keys(games));
+        return;
+      }
       
       const game = games[gameId];
+      console.log('📋 Estado actual:', game.gameState, 'Jugadores:', game.players.length);
+      
       game.gameState = 'playing';
       game.startTime = Date.now();
       

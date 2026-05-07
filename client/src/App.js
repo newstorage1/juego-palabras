@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import { SOCKET_URL } from './config/config';
 import io from 'socket.io-client';
+import V2App from './v2/V2App';
 
 const socket = io(SOCKET_URL);
 
@@ -80,37 +82,42 @@ function App() {
   }, [gameId, playerIndex]);
 
   return (
-    <div className="app">
-      <Header 
-        screen={screen} 
-        userSettings={userSettings} 
-        onUpdateSettings={updateUserSettings}
-      />
-      
-      <div className="content">
-        {screen === 'lobby' && (
-          <Lobby 
-            onCreateGame={handleCreateGame}
-            onJoinGame={handleJoinGame}
-            userSettings={userSettings}
+    <Routes>
+      <Route path="/v2/*" element={<V2App />} />
+      <Route path="/*" element={
+        <div className="app">
+          <Header 
+            screen={screen} 
+            userSettings={userSettings} 
             onUpdateSettings={updateUserSettings}
           />
-        )}
-        
-        {screen === 'game' && gameData && (
-          <Game 
-            gameData={gameData}
-            playerIndex={playerIndex}
-            userSettings={userSettings}
-            onUpdateSettings={updateUserSettings}
-            gameId={gameId}
-            onAbandonar={handleAbandonar}
-            gameEndedData={gameEndedData}
-            setGameEndedData={setGameEndedData}
-          />
-        )}
-      </div>
-    </div>
+          
+          <div className="content">
+            {screen === 'lobby' && (
+              <Lobby 
+                onCreateGame={handleCreateGame}
+                onJoinGame={handleJoinGame}
+                userSettings={userSettings}
+                onUpdateSettings={updateUserSettings}
+              />
+            )}
+            
+            {screen === 'game' && gameData && (
+              <Game 
+                gameData={gameData}
+                playerIndex={playerIndex}
+                userSettings={userSettings}
+                onUpdateSettings={updateUserSettings}
+                gameId={gameId}
+                onAbandonar={handleAbandonar}
+                gameEndedData={gameEndedData}
+                setGameEndedData={setGameEndedData}
+              />
+            )}
+          </div>
+        </div>
+      } />
+    </Routes>
   );
 }
 

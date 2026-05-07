@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="description" content="Sopa de Letras - Versión 2" />
+    <title>Sopa de Letras - Versión 2</title>
+    <script>
+      // Redirect to server port
+      if (window.location.port === '3000') {
+        window.location.href = 'http://localhost:3001/v2';
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="http://localhost:3001/v2/main.js" type="module"></script>
+  </body>
+</html>
