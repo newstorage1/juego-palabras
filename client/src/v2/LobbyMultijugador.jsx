@@ -10,6 +10,27 @@ const AVAILABLE_THEMES = [
   { name: 'ocean', label: 'Océano', colors: ['#006994', '#00bfff'] }
 ];
 
+const WORD_THEMES = {
+  es: [
+    { id: 'animales', label: 'Animales' },
+    { id: 'tecnologia', label: 'Tecnología' },
+    { id: 'deportes', label: 'Deportes' },
+    { id: 'países', label: 'Países' },
+    { id: 'colores', label: 'Colores' },
+    { id: 'frutas', label: 'Frutas' },
+    { id: 'vegetales', label: 'Vegetales' }
+  ],
+  en: [
+    { id: 'animals', label: 'Animals' },
+    { id: 'technology', label: 'Technology' },
+    { id: 'sports', label: 'Sports' },
+    { id: 'countries', label: 'Countries' },
+    { id: 'colors', label: 'Colors' },
+    { id: 'fruits', label: 'Fruits' },
+    { id: 'vegetables', label: 'Vegetables' }
+  ]
+};
+
 export default function LobbyMultijugador({ userData, onLogout, onStartGame, onUpdateTheme }) {
   const [socket, setSocket] = useState(null);
   const [socketId, setSocketId] = useState(null);
@@ -21,7 +42,9 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
   const [settings, setSettings] = useState({
     gridSize: 15,
     language: 'es',
-    theme: 'default'
+    theme: 'default',
+    wordThemeMode: 'auto',
+    wordTheme: 'animales'
   });
   const [joinCode, setJoinCode] = useState('');
   const [gameEndedData, setGameEndedData] = useState(null);
@@ -138,11 +161,18 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
   const handleCreateGame = () => {
     if (!socket) return;
 
+    const wordTheme = settings.wordThemeMode === 'auto' ? 'auto' : settings.wordTheme;
+
     socket.emit('createGame', {
       nickname: userData.nickname,
       age: userData.age,
       avatar: userData.avatar,
-      settings: { gridSize: settings.gridSize, language: settings.language, theme: settings.theme }
+      settings: { 
+        gridSize: settings.gridSize, 
+        language: settings.language, 
+        theme: settings.theme,
+        wordTheme: wordTheme
+      }
     }, (response) => {
       if (response.success) {
         setCurrentGame({ gameId: response.gameId, isCreator: true });
@@ -239,6 +269,31 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                       <option value={20}>Difícil (20x20)</option>
                     </select>
                   </div>
+
+                  <div className="form-group">
+                    <label>Temario de Palabras</label>
+                    <select
+                      value={settings.wordThemeMode}
+                      onChange={(e) => setSettings({ ...settings, wordThemeMode: e.target.value })}
+                    >
+                      <option value="auto">Automático (aleatorio)</option>
+                      <option value="manual">Manual (elegir tema)</option>
+                    </select>
+                  </div>
+
+                  {settings.wordThemeMode === 'manual' && (
+                    <div className="form-group">
+                      <label>Selecciona el tema</label>
+                      <select
+                        value={settings.wordTheme}
+                        onChange={(e) => setSettings({ ...settings, wordTheme: e.target.value })}
+                      >
+                        {(WORD_THEMES[settings.language] || []).map(t => (
+                          <option key={t.id} value={t.id}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label>Selecciona tu tema</label>

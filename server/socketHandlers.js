@@ -1,6 +1,54 @@
 const { saveGame, loadGame, deleteGame } = require('./persistence');
 const { generateWordSearch } = require('./gameLogic');
 const { validateContent, validateGameCode } = require('./validation');
+const fs = require('fs');
+const path = require('path');
+
+// Cargar palabras desde archivos JSON
+let wordsData = { es: {}, en: {} };
+const DATA_DIR = path.join(__dirname, '../data');
+
+function loadWordsData() {
+  try {
+    const esPath = path.join(DATA_DIR, 'words_es.json');
+    const enPath = path.join(DATA_DIR, 'words_en.json');
+    
+    if (fs.existsSync(esPath)) {
+      const esData = JSON.parse(fs.readFileSync(esPath, 'utf8'));
+      wordsData.es = esData.temas || {};
+    }
+    
+    if (fs.existsSync(enPath)) {
+      const enData = JSON.parse(fs.readFileSync(enPath, 'utf8'));
+      wordsData.en = enData.themes || {};
+    }
+    
+    console.log('✅ Palabras cargadas desde data/');
+    console.log('   Español temas:', Object.keys(wordsData.es));
+    console.log('   Inglés temas:', Object.keys(wordsData.en));
+  } catch (err) {
+    console.error('❌ Error cargando palabras:', err.message);
+  }
+}
+
+loadWordsData();
+
+function getAvailableThemes(language) {
+  const langData = wordsData[language] || {};
+  return Object.keys(langData);
+}
+
+function getWordsForTheme(language, theme, count = 15) {
+  const langData = wordsData[language] || {};
+  const themeWords = langData[theme] || [];
+  
+  if (themeWords.length === 0) {
+    return ['NODEJS', 'REACT', 'EXPRESS', 'SOCKET', 'CODE', 'GAME'];
+  }
+  
+  const shuffled = [...themeWords].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
 
 // Generar código único
 function generateGameCode() {
@@ -88,14 +136,34 @@ function handleSocketEvents(io) {
     // Crear partida
     socket.on('createGame', (userData, callback) => {
       const gameId = generateGameCode();
-      const { gridSize = 15, theme = 'default', language = 'es' } = userData;
+      const settings = userData.settings || {};
+      const gridSize = settings.gridSize || 15;
+      const theme = settings.theme || 'default';
+      const language = settings.language || 'es';
+      const wordTheme = settings.wordTheme || 'auto';
       
-      // Generar palabras por defecto
-      const defaultWords = language === 'es' 
-        ? ['NODEJS', 'REACT', 'EXPRESS', 'SOCKET', 'CODIGO', 'JUEGO', 'RED', 'SERVIDOR', 'FRONTEND', 'BACKEND']
-        : ['NODEJS', 'REACT', 'EXPRESS', 'SOCKET', 'CODE', 'GAME', 'NETWORK', 'SERVER', 'FRONTEND', 'BACKEND'];
+      // Generar palabras según el tema seleccionado
+      let wordsForGame;
       
-      const { grid, placedWords } = generateWordSearch(defaultWords, gridSize);
+      if (wordTheme === 'auto') {
+        const availableThemes = getAvailableThemes(language);
+        if (availableThemes.length > 0) {
+          const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+          wordsForGame = getWordsForTheme(language, randomTheme, 15);
+          console.log(`🎲 Tema automático seleccionado: ${randomTheme} (${language})`);
+        } else {
+          wordsForGame = ['NODEJS', 'REACT', 'EXPRESS', 'SOCKET', 'CODE', 'GAME'];
+        }
+      } else {
+        wordsForGame = getWordsForTheme(language, wordTheme, 15);
+        console.log(`📚 Tema manual seleccionado: ${wordTheme} (${language})`);
+      }
+      
+      if (wordsForGame.length < 10) {
+        wordsForGame = ['NODEJS', 'REACT', 'EXPRESS', 'SOCKET', 'CODE', 'GAME'];
+      }
+      
+      const { grid, placedWords } = generateWordSearch(wordsForGame, gridSize);
       
       const gameData = {
         gameId,
@@ -592,5 +660,7 @@ module.exports = {
   initializeFromSavedGames,
   games,
   users,
-  endGame
+  endGame,
+  getAvailableThemes,
+  getWordsForTheme
 };

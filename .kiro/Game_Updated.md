@@ -8,19 +8,12 @@
 
 #### Fuentes de Palabras:
 - **Base de Datos Local**: Temas predefinidos en español e inglés
-- **Asistencia con IA**: Los participantes pueden solicitar temarios personalizados (ej. "20 palabras de animales raros")
-- **Restricciones de Contenido**:
-  - Prohibido contenido sexual y violento
-  - Solo lenguaje formal (sin coloquialismos)
-  - Filtro automático de contenido inapropiado
 
 #### Bilingüismo:
 - Soporte nativo para español e inglés
-- La IA debe generar palabras en el idioma solicitado
 - La base de datos local contendrá categorías en ambos idiomas
 
 #### Lógica de Generación:
-- El servidor valida que las palabras cumplan con las restricciones
 - Se asegura que las palabras se crucen en el tablero
 - Se evita generar palabras que sean subcadenas de otras (para evitar ambigüedad)
 
@@ -30,72 +23,26 @@
 
 #### Diseño de Interacción:
 - **Arrastrar y Soltar**: Selección de palabras arrastrando el mouse o dedo
-- **Feedback Visual**:
-  - Línea conectando las letras seleccionadas
-  - Colores distintos para cada jugador (verde para jugador local, rojo para rival)
-  - Animación de "resaltado" al pasar por encima de una letra
-
-#### Direcciones de Selección:
-- Horizontal (izquierda a derecha y derecha a izquierda)
-- Vertical (arriba a abajo y abajo a arriba)
-- Diagonal (4 direcciones)
+- **Direcciones de Selección**:
+  - Horizontal (izquierda a derecha y derecha a izquierda)
+  - Vertical (arriba a abajo y abajo a arriba)
+  - Diagonal (4 direcciones)
 
 #### Validación en Tiempo Real:
-- Mientras se arrastra: muestra una línea punteada
-- Al soltar: valida la palabra seleccionada
-- Feedback inmediato: correcto/incorrecto con animación
+- Al soltar: valida la palabra seleccionada mediante botón "Confirmar"
+- Feedback inmediato: correcto/incorrecto
 
 #### Estado de "Congelamiento":
 - Jugador congelado ve el tablero pero no puede interactuar
-- Se muestra un temporizador visual en la esquina superior
-- Mensaje: "Espera X segundos para volver a jugar"
+- Mensaje en overlay: "Congelado - Espera X segundos..."
 
 ---
 
-### **3. Sistema de Guardado y Recuperación**
+### **3. Sistema de Guardado y Recuperación (Solo Cliente)**
 
-#### Persistencia:
-- **Formato**: JSON
-- **Contenido del archivo**:
-  ```json
-  {
-    "gameId": "SOPA-X92",
-    "players": [
-      { "id": "p1", "nickname": "Jugador A", "avatar": "default", "score": 12 },
-      { "id": "p2", "nickname": "Jugador B", "avatar": "default", "score": 8 }
-    ],
-    "grid": [
-      ["A", "B", "C", ...],
-      ...
-    ],
-    "words": [
-      { "word": "NODEJS", "foundBy": null, "coordinates": [[0,0], [0,5]] },
-      ...
-    ],
-    "settings": {
-      "difficulty": "medium",
-      "gridSize": 15,
-      "theme": "technology"
-    },
-    "timestamp": "2026-05-04T10:30:00Z"
-  }
-  ```
-
-#### Recuperación:
-- Al reiniciar el servidor, busca archivos `.json` en el directorio de partidas
-- Restaura el estado de cada partida
-- Notifica a los jugadores conectados que la partida ha sido recuperada
-- Si un jugador no está conectado, se mantiene en espera hasta que regrese
-
-#### Frecuencia de Guardado:
-- Auto-guardado cada 30 segundos
-- Guardado forzado al finalizar una partida
-- Guardado inmediato al encontrar una palabra
-
-#### Configuración de Desarrollo:
-- Archivo `nodemon.json` para evitar reinicios no deseados
-- Ignora cambios en la carpeta `saves/` para prevenir conflictos durante el juego
-- El servidor monitoriza solo la carpeta `server/`
+#### Persistencia en Cliente:
+- Los datos del usuario y partida se guardan en localStorage
+- Al recargar la página se recupera el estado del juego
 
 ---
 
@@ -103,7 +50,7 @@
 
 #### Temporizador Global:
 - Tiempo límite por partida (configurable: 10, 15, 20 minutos)
-- Se muestra en el scoreboard como "Tiempo: 15:00"
+- Se muestra en el scoreboard como "Tiempo: MM:SS"
 - Al llegar a 0, se finaliza la partida automáticamente
 
 #### Condición de Victoria:
@@ -125,6 +72,7 @@
   - Puntuación final de todos los jugadores
   - Estadísticas: palabras encontradas, palabra más larga
   - Botón "Regresar al Lobby"
+  - Auto-redirect al lobby después de 5 segundos
 
 ---
 
@@ -138,41 +86,33 @@
 ### Backend:
 - **Node.js** con **Express.js**
 - **Socket.io** para comunicación en tiempo real
-- **Redis** (opcional pero recomendado para persistencia rápida)
-- **Base de datos local**: Archivos JSON para persistencia
+- **Base de datos local**: Archivos JSON para palabras
 
 ### Frontend:
-- **React** con TypeScript
-- **CSS Modules** o **Tailwind CSS** para estilos
-- **Framer Motion** para animaciones
+- **React** con JavaScript
+- **CSS** para estilos
+- **Socket.io-client** para comunicación en tiempo real
 
 ### Estructura de Archivos:
 ```
 /sopa-pro-multiplayer
 ├── /client
-│   ├── /components
-│   │   ├── Board.jsx           // Renderiza la matriz y maneja selección
-│   │   ├── Marquee.jsx         // Efecto marquesina de palabras
-│   │   ├── Chat.jsx            // Sistema de mensajería
-│   │   ├── Scoreboard.jsx      // Marcador en vivo
-│   │   ├── Timer.jsx           // Temporizador global
-│   │   └── CongestionOverlay.jsx // Pantalla de congelamiento
-│   ├── /hooks
-│   │   ├── useGameLogic.js     // Lógica del juego
-│   │   └── useSocket.js        // Manejo de sockets
+│   ├── /src
+│   │   ├── /v2
+│   │   │   ├── V2App.jsx           // Componente principal
+│   │   │   ├── PreLobby.jsx         // Pantalla de entrada/registro
+│   │   │   ├── LobbyIndividual.jsx // Lobby modo individual
+│   │   │   ├── LobbyMultijugador.jsx // Lobby modo multijugador
+│   │   │   ├── GameScreen.jsx      // Pantalla de juego
+│   │   │   ├── V2.css              // Estilos
+│   │   │   └── main.js             // Punto de entrada
 │   └── App.jsx
 ├── /server
-│   ├── index.js                // Configuración de Express y Socket.io
-│   ├── gameLogic.js            // Algoritmo de generación de sopa de letras
-│   ├── socketHandlers.js       // Gestión de salas y eventos
-│   ├── wordGenerator.js        // Generación de palabras con IA
-│   ├── persistence.js          // Guardado y recuperación JSON
-│   └── validation.js           // Validación de palabras y selecciones
+│   ├── index.js                     // Configuración de Express y Socket.io
+│   └── ...
 ├── /data
-│   ├── words_es.json           // Base de datos en español
-│   └── words_en.json           // Base de datos en inglés
-├── /saves
-│   └── [gameId].json           // Partidas guardadas
+│   ├── words_es.json                // Base de datos en español
+│   └── words_en.json                // Base de datos en inglés
 └── package.json
 ```
 
@@ -237,15 +177,13 @@ Según la opción que seleccionó el jugador en el Pre-lobby, cargará una de es
 
 ### **2. Lobby - Modo Individual**
 
-(Si选择了Individual o tiene menos de 13 años)
-
 El Lobby es la pantalla principal donde el jugador gestiona sus partidas. Según la opción seleccionada en el Pre-lobby, se carga uno de los siguientes modos:
 
 #### Opciones de Configuración de Partida:
 
 - **Selector de Dificultad**: Tamaño de cuadrícula (Fácil 10x10, Medio 15x15, Difícil 20x20)
 - **Selector de Idioma**: Español o Inglés
-- **Selecciona tu Tema**: Opción para elegir el tema visual del juego (Claro, Oscuro, Neón, Natural, etc.)
+- **Selecciona tu Tema**: Opción para elegir el tema visual del juego (Clásico, Oscuro, Neón, Naturaleza, Océano)
 
 #### Acciones Disponibles:
 
@@ -258,12 +196,7 @@ El Lobby es la pantalla principal donde el jugador gestiona sus partidas. Según
 - **Campo "Código de Partida"**: Formulario para introducir el código de la partida a la que se desea unir
 - **Botón "Unirse a Partida"**: Al presionarlo, valida el código y une al jugador a la partida
 
-- **Solicitar Temario con IA**: Botón para pedir palabras personalizadas
-- **Botón "Iniciar Juego"**: Comienza la partida individualmente
-
 ### **3. Lobby - Modo Multijugador (Sala de Espera)**
-
-(Si选择了Multijugador y tiene 13 años o más)
 
 El Lobby Multijugador funciona como una **sala de espera global** donde todos los jugadores conectados pueden interactuar antes de entrar a una partida específica.
 
@@ -295,7 +228,6 @@ El Lobby Multijugador funciona como una **sala de espera global** donde todos lo
 #### Lista de Espera de la Partida:
 
 - **Lista de jugadores**: Muestra los jugadores que se han unido a una partida específica
-- **Estado de preparación**: Cada jugador debe confirmar que está listo
 
 #### Control del Juego:
 - **Solo el creador puede iniciar**: Cuando todos los jugadores desired están unidos, el creador presiona "Iniciar Juego"
@@ -306,7 +238,7 @@ El Lobby Multijugador funciona como una **sala de espera global** donde todos lo
 - Código de la partida (para compartir)
 - Lista de jugadores conectados al lobby global
 - Lista de jugadores en cada partida específica
-- Contador de jugadores listos
+- Contador de jugadores
 - Botón "Crear Partida" (para cualquier jugador en el lobby)
 - Botón "Unirse a Partida" con campo de código
 - Botón "Iniciar Juego" (solo visible para el creador de la partida)
@@ -326,11 +258,10 @@ Entra al Lobby Multijugador (Sala de Espera)
   ├── Juanito escribe: "Voy a crear partida, esperen"
   ├── Juanito presiona "Crear Partida"
   ├── Sistema genera: "SOPA-ABC"
-  ├── Juanito escribe en chat: "Mi código es SOPA-ABC, únanse"
+  ├── Juanito ve en chat: "El jugador Juanito ha creado la sala SOPA-ABC"
   ├── María ve el código y presiona "Unirse", ingresa "SOPA-ABC"
   ├── Pedro ve el código y presiona "Unirse", ingresa "SOPA-ABC"
   ├── Juanito ve en la lista: "María conectada", "Pedro conectado"
-  ├── Juanito escribe: "Ya estamos todos, inicio?"
   ├── Juanito presiona "Iniciar Juego"
   └── Todos entran al juego simultáneamente
 ```
@@ -344,18 +275,17 @@ Entra al Lobby Multijugador (Sala de Espera)
 
 #### Zona Central (El Tablero):
 - Rejilla interactiva con selección por arrastre
-- Feedback visual de selección
+- Feedback de celdas seleccionadas
 - Animaciones al encontrar palabras
 
 #### Zona Inferior (Marquesina de Palabras):
-- Palabras desplazándose de derecha a izquierda
-- Animación de explosión al encontrar palabra
+- Palabras desplazándose horizontalmente
 - Color según jugador que la encontró
+- Muestra palabras encontradas / total
 
 #### Lateral (Chat y Log):
-- Chat para comunicarse (funciona mediante HTTP polling)
+- Chat para comunicarse (funciona mediante HTTP polling cada 1 segundo)
 - Historial de quién encontró qué palabra
-- Notificaciones de congelamiento
 
 ---
 
@@ -414,60 +344,27 @@ Entra al Lobby Multijugador (Sala de Espera)
     "theme": "technology",
     "language": "en",
     "timeLimitMinutes": 15,
-    "mode": "solo" // o "multiplayer"
+    "mode": "solo"
   },
   "timestamp": "2026-05-04T10:30:00Z",
   "gameState": "waiting" | "playing" | "finished",
-  "lastWordResult": null, // Resultado de la última palabra encontrada (para polling)
+  "lastWordResult": null,
   "winner": null
 }
 ```
 
 ---
 
-## 💡 Nuevas Funcionalidades
-
-### **Generación con IA**:
-- Endpoint `/api/generate-words` que recibe una solicitud como "20 palabras de animales raros"
-- Filtra contenido inapropiado
-- Devuelve palabras en el idioma solicitado
-- Valida que las palabras sean formales y no coloquiales
-
-### **Persistencia Automática**:
-- Guardado cada 30 segundos
-- Recuperación al reiniciar
-- Notificación a jugadores de partida recuperada
-- El resultado de palabras se guarda en el objeto game para survive a reinicios del servidor
-
-### **Temporizador Global**:
-- Contador regresivo visible para todos
-- Finalización automática al llegar a 0
-- Modal de estadísticas al finalizar
-
-### **Sistema de Congelamiento**:
-- Visualización clara del estado
-- Temporizador de recuperación
-- Bloqueo de interacción con tablero
-
----
-
 ## 🎨 Personalización por Usuario
 
 ### Temas y Estilos:
-- **Selección de Tema**: Cada usuario puede elegir un tema visual (Claro, Oscuro, Neón, Natural, etc.)
-- **Imagen de Fondo**: Opción para subir una imagen personalizada
-- **Colores UI Personalizables**:
-  - Color del tablero
-  - Color de las letras
-  - Color de selección (por jugador)
-  - Color de fondo de marquesina
-  - Color de texto del chat
+- **Selección de Tema**: Cada usuario puede elegir un tema visual (Clásico, Oscuro, Neón, Naturaleza, Océano)
+- Los temas se aplican mediante CSS y atributos data-theme en el documento
 
 ### Modos de Juego:
 - **Juego Individual**: Un jugador contra el tiempo
   - Objetivo: Encontrar todas las palabras antes de que termine el tiempo
   - Sin rival, pero con marcador personal
-  - Estadísticas individuales (precisión, tiempo por palabra)
 - **Juego Multijugador**: Dos jugadores en competencia
   - Sincronización en tiempo real
   - Marcador competitivo
@@ -477,7 +374,6 @@ Entra al Lobby Multijugador (Sala de Espera)
 - Avatar personalizado
 - Nickname
 - Tema preferido
-- Colores UI personalizados
 - Idioma preferido
 
 ---
@@ -490,7 +386,6 @@ Entra al Lobby Multijugador (Sala de Espera)
 2. **Confirmar**: El jugador presiona el botón "Confirmar"
 3. **Validación del servidor**: 
    - El servidor valida que la palabra exista en las coordenadas seleccionadas
-   - Usa `validateSelection()` para verificar
 4. **Cálculo de puntos**:
    ```
    - 1-4 letras: 1 punto
@@ -520,7 +415,8 @@ Entra al Lobby Multijugador (Sala de Espera)
 
 - Si un jugador fallan 3 palabras consecutivas, queda congelado por 5 segundos
 - Durante ese tiempo no puede interactuar con el tablero
-- Se muestra un overlay con temporizador
+- Se muestra un overlay con mensaje de congelamiento
+- El contador de intentos fallidos se resetea al encontrar una palabra correctamente
 
 ### Condición de victoria:
 
@@ -539,19 +435,19 @@ Entra al Lobby Multijugador (Sala de Espera)
 ## 🎯 Funcionalidades Implementadas
 
 1. ✅ Sistema de UI para selección (botón Confirmar)
-2. ✅ Sistema de persistencia JSON
-3. ✅ Temporizador global
-4. ✅ Lógica de congelamiento
-5. ✅ Sistema de personalización (temas, colores, fondos)
-6. ✅ Modo individual y multijugador
-7. ✅ Chat mediante HTTP polling
-8. ✅ Pantalla de fin de juego con botón de regresar al lobby
-9. ✅ Botón de confirmación de palabras
+2. ✅ Temporizador global
+3. ✅ Lógica de congelamiento
+4. ✅ Sistema de personalización (temas)
+5. ✅ Modo individual y multijugador
+6. ✅ Chat mediante HTTP polling
+7. ✅ Pantalla de fin de juego con botón de regresar al lobby y auto-redirect
+8. ✅ Validación de edad para modo multijugador
+9. ✅ Estadísticas del usuario (partidasGanadas, mejorPuntaje)
+10. ✅ Persistencia en localStorage
 
 ---
 
-## 🎯 Próximos Pasos (Por Implementar)
+## 🎯 Por Implementar
 
-1. Implementar generación de palabras con IA
-2. Mejorar animaciones de feedback visual
-3. Añadir más estadísticas al final del juego (tiempo promedio de reacción, precisión)
+1. Generación de palabras con IA
+2. Persistencia en servidor (guardado automático cada 30s)

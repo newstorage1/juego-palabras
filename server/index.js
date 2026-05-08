@@ -202,6 +202,17 @@ app.get('/api/selectWord/:gameId', (req, res) => {
   res.json({ result: result || null });
 });
 
+// Endpoint para obtener temas disponibles
+app.get('/api/themes', (req, res) => {
+  const { language = 'es' } = req.query;
+  
+  // Usar las funciones de socketHandlers para obtener los temas
+  const { getAvailableThemes } = require('./socketHandlers');
+  const themes = getAvailableThemes(language);
+  
+  res.json({ themes, language });
+});
+
 // Inicializar partidas guardadas
 initializeFromSavedGames();
 
