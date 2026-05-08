@@ -10,7 +10,7 @@ const AVAILABLE_THEMES = [
   { name: 'ocean', label: 'Océano', colors: ['#006994', '#00bfff'] }
 ];
 
-export default function LobbyIndividual({ userData, onLogout, onStartGame }) {
+export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpdateTheme }) {
   const [socket, setSocket] = useState(null);
   const [socketId, setSocketId] = useState(null);
   const [mode, setMode] = useState('create');
@@ -146,7 +146,10 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame }) {
               <button
                 key={theme.name}
                 className={`theme-option ${settings.theme === theme.name ? 'selected' : ''}`}
-                onClick={() => setSettings({ ...settings, theme: theme.name })}
+                onClick={() => {
+                  setSettings({ ...settings, theme: theme.name });
+                  if (onUpdateTheme) onUpdateTheme(theme.name);
+                }}
               >
                 <div
                   className="theme-preview"

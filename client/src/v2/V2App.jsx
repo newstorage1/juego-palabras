@@ -30,6 +30,12 @@ export default function V2App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (userData?.theme) {
+      document.documentElement.setAttribute('data-theme', userData.theme);
+    }
+  }, [userData?.theme]);
+
   const handleEnter = (data) => {
     setUserData(data);
     localStorage.setItem('v2_userData', JSON.stringify(data));
@@ -43,6 +49,14 @@ export default function V2App() {
     setScreen('prelobby');
     localStorage.removeItem('v2_userData');
     localStorage.removeItem('v2_currentGame');
+    document.documentElement.setAttribute('data-theme', 'default');
+  };
+
+  const handleUpdateTheme = (theme) => {
+    const updated = { ...userData, theme };
+    setUserData(updated);
+    localStorage.setItem('v2_userData', JSON.stringify(updated));
+    document.documentElement.setAttribute('data-theme', theme);
   };
 
   const handleStartGame = (gameId, data, pIndex) => {
@@ -89,6 +103,7 @@ export default function V2App() {
           userData={userData} 
           onLogout={handleLogout}
           onStartGame={handleStartGame}
+          onUpdateTheme={handleUpdateTheme}
         />
       );
     }
@@ -97,6 +112,7 @@ export default function V2App() {
         userData={userData} 
         onLogout={handleLogout}
         onStartGame={handleStartGame}
+        onUpdateTheme={handleUpdateTheme}
       />
     );
   };
