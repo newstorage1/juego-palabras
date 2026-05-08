@@ -51,6 +51,10 @@ app.get('/v2/lobby', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/lobby.html'));
 });
 
+app.get('/v2/status', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/public/v2-status.html'));
+});
+
 // Configuración
 const PORT = process.env.PORT || 3001;
 

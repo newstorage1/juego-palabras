@@ -132,12 +132,38 @@ function handleSocketEvents(io) {
       
       socket.join(gameId);
       
-      callback({ success: true, gameId, gameData });
+      const playersData = gameData.players.map(p => ({
+        id: p.id,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        score: p.score,
+        foundWords: p.foundWords || []
+      }));
+      
+      const wordsData = gameData.words.map(w => ({
+        word: w.word,
+        coordinates: w.coordinates,
+        foundBy: w.foundBy
+      }));
+      
+      const gameDataClean = {
+        gameId: gameData.gameId,
+        players: playersData,
+        words: wordsData,
+        settings: gameData.settings,
+        grid: gameData.grid,
+        gameState: gameData.gameState,
+        startTime: gameData.startTime
+      };
+      
+      callback({ success: true, gameId, gameData: gameDataClean });
     });
     
     // Unirse a partida
     socket.on('joinGame', (data, callback) => {
       const { gameId, userData } = data;
+      
+      console.log(`📥 joinGame - gameId: ${gameId}, socket.id: ${socket.id}, nickname: ${userData?.nickname}`);
       
       if (!games[gameId]) {
         // Intentar cargar partida guardada
@@ -152,12 +178,81 @@ function handleSocketEvents(io) {
       
       const game = games[gameId];
       
-      if (game.players.length >= 2) {
+      console.log(`   Estado juego: ${game.gameState}, Jugadores actuales: ${game.players.length}`);
+      
+      if (game.players.length >= 4) {
         return callback({ success: false, error: 'Partida llena' });
       }
       
       if (game.gameState === 'playing') {
+        const existingPlayer = game.players.find(p => p.nickname === userData?.nickname);
+        console.log(`   Buscando por nickname: ${userData?.nickname}, encontrado:`, existingPlayer);
+        if (existingPlayer) {
+          users[socket.id] = { gameId, playerIndex: game.players.indexOf(existingPlayer) };
+          socket.join(gameId);
+          console.log(`   ✅ Reconectado - playerIndex: ${game.players.indexOf(existingPlayer)}`);
+          
+          const playersData = game.players.map(p => ({
+            id: p.id,
+            nickname: p.nickname,
+            avatar: p.avatar,
+            score: p.score,
+            foundWords: p.foundWords || []
+          }));
+          
+          const wordsData = game.words.map(w => ({
+            word: w.word,
+            coordinates: w.coordinates,
+            foundBy: w.foundBy
+          }));
+          
+          const gameDataClean = {
+            gameId: game.gameId,
+            players: playersData,
+            words: wordsData,
+            settings: game.settings,
+            grid: game.grid,
+            gameState: game.gameState,
+            startTime: game.startTime
+          };
+          
+          return callback({ success: true, gameId, gameData: gameDataClean, reconnect: true });
+        }
         return callback({ success: false, error: 'Partida ya iniciada' });
+      }
+      
+      // Verificar si el nickname ya existe (reconectar aunque el juego no haya started)
+      const existingPlayer = game.players.find(p => p.nickname === userData?.nickname);
+      if (existingPlayer) {
+        console.log(`   🔄 Reconectando jugador existente: ${userData.nickname}, id: ${existingPlayer.id}`);
+        users[socket.id] = { gameId, playerIndex: game.players.indexOf(existingPlayer) };
+        socket.join(gameId);
+        
+        const playersData = game.players.map(p => ({
+          id: p.id,
+          nickname: p.nickname,
+          avatar: p.avatar,
+          score: p.score,
+          foundWords: p.foundWords || []
+        }));
+        
+        const wordsData = game.words.map(w => ({
+          word: w.word,
+          coordinates: w.coordinates,
+          foundBy: w.foundBy
+        }));
+        
+        const gameDataClean = {
+          gameId: game.gameId,
+          players: playersData,
+          words: wordsData,
+          settings: game.settings,
+          grid: game.grid,
+          gameState: game.gameState,
+          startTime: game.startTime
+        };
+        
+        return callback({ success: true, gameId, gameData: gameDataClean, reconnect: true });
       }
       
       const playerIndex = game.players.length;
@@ -176,29 +271,56 @@ function handleSocketEvents(io) {
       
       socket.join(gameId);
       
-      // Notificar a todos los jugadores
+      const playersData = game.players.map(p => ({
+        id: p.id,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        score: p.score,
+        foundWords: p.foundWords || []
+      }));
+      
       io.to(gameId).emit('playerJoined', {
-        player: game.players[playerIndex],
-        players: game.players
+        player: playersData[playerIndex],
+        players: playersData
       });
       
       // Guardar partida
       saveGame(gameId, game);
       
-      callback({ success: true, gameData: game });
+      const wordsData = game.words.map(w => ({
+        word: w.word,
+        coordinates: w.coordinates,
+        foundBy: w.foundBy
+      }));
+      
+      const gameDataClean = {
+        gameId: game.gameId,
+        players: playersData,
+        words: wordsData,
+        settings: game.settings,
+        grid: game.grid,
+        gameState: game.gameState,
+        startTime: game.startTime
+      };
+      
+      callback({ success: true, gameData: gameDataClean });
     });
     
-    // Iniciar partida
+// Iniciar partida
     socket.on('startGame', (gameId) => {
       console.log('📩 startGame recibido:', gameId, 'por socket:', socket.id);
       if (!games[gameId]) {
         console.log('❌ Partida no encontrada:', gameId);
-        console.log('Partidas en memoria:', Object.keys(games));
+        console.log('Partidas existentes:', Object.keys(games));
         return;
       }
       
       const game = games[gameId];
       console.log('📋 Estado actual:', game.gameState, 'Jugadores:', game.players.length);
+      console.log('📋 Jugadores en la partida:');
+      game.players.forEach((p, i) => {
+        console.log(`   [${i}] id: ${p.id}, nickname: ${p.nickname}`);
+      });
       
       game.gameState = 'playing';
       game.startTime = Date.now();
@@ -206,11 +328,26 @@ function handleSocketEvents(io) {
       // Iniciar temporizador
       startTimer(gameId, io);
       
+      const playersData = game.players.map(p => ({
+        id: p.id,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        score: p.score,
+        foundWords: p.foundWords || []
+      }));
+      
+      const wordsData = game.words.map(w => ({
+        word: w.word,
+        coordinates: w.coordinates,
+        foundBy: w.foundBy
+      }));
+      
       io.to(gameId).emit('gameStarted', {
-        players: game.players,
+        players: playersData,
         settings: game.settings,
         grid: game.grid,
-        words: game.words
+        words: wordsData,
+        gameState: game.gameState
       });
       
       saveGame(gameId, game);
@@ -218,12 +355,20 @@ function handleSocketEvents(io) {
     
     // Seleccionar palabra
     socket.on('selectWord', (data) => {
-      const { gameId, playerIndex, coordinates, word } = data;
+      const { gameId, playerId, coordinates, word } = data;
       const game = games[gameId];
+      
+      console.log('📥 selectWord recibido - playerId:', playerId, 'word:', word);
       
       if (!game || game.gameState !== 'playing') return;
       
-      const player = game.players[playerIndex];
+      const player = game.players.find(p => p.id === playerId);
+      
+      if (!player) {
+        console.log('❌ Jugador no encontrado con playerId:', playerId);
+        console.log('📋 Jugadores disponibles:', game.players.map(p => ({ id: p.id, nickname: p.nickname })));
+        return;
+      }
       
       // Verificar si está congelado
       if (player.frozenUntil && Date.now() < player.frozenUntil) {
@@ -265,14 +410,28 @@ function handleSocketEvents(io) {
       player.score += points;
       player.consecutiveFailures = 0;
       
+      const playersData = game.players.map(p => ({
+        id: p.id,
+        nickname: p.nickname,
+        avatar: p.avatar,
+        score: p.score,
+        foundWords: p.foundWords || [],
+        frozenUntil: p.frozenUntil
+      }));
+      
+      const wordsLeftData = game.words.filter(w => !w.foundBy).map(w => ({
+        word: w.word,
+        coordinates: w.coordinates
+      }));
+      
       io.to(gameId).emit('wordFound', {
         word,
         playerId: player.id,
         nickname: player.nickname,
         points,
         coordinates: game.words[wordIndex].coordinates,
-        players: game.players,
-        wordsLeft: game.words.filter(w => !w.foundBy)
+        players: playersData,
+        wordsLeft: wordsLeftData
       });
       
       // Verificar condición de victoria
@@ -355,27 +514,13 @@ function handleSocketEvents(io) {
       if (callback) callback({ success: true });
     });
     
-    // Desconexión
+    // Desconexión - NO eliminar jugador para permitir reconexión
     socket.on('disconnect', () => {
       console.log('Usuario desconectado:', socket.id);
       
-      const userInfo = users[socket.id];
-      if (userInfo) {
-        const { gameId, playerIndex } = userInfo;
-        
-        if (games[gameId]) {
-          games[gameId].players = games[gameId].players.filter((_, i) => i !== playerIndex);
-          
-          if (games[gameId].players.length === 0) {
-            delete games[gameId];
-            deleteGame(gameId);
-          } else {
-            saveGame(gameId, games[gameId]);
-          }
-        }
-        
-        delete users[socket.id];
-      }
+      // No eliminamos al jugador para permitir reconexión
+      // El jugador puede reconectarse usando su nickname
+      delete users[socket.id];
     });
   });
 }

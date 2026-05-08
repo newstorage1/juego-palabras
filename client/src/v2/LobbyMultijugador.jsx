@@ -25,6 +25,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame }) {
   });
   const [joinCode, setJoinCode] = useState('');
   const [gameEndedData, setGameEndedData] = useState(null);
+  const [gameState, setGameState] = useState('waiting');
   const chatRef = useRef(null);
   const currentGameRef = useRef(null);
 
@@ -54,13 +55,17 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame }) {
     
     newSocket.on('gameStarted', (data) => {
       console.log('🎮 gameStarted recibido:', data);
+      
+      if (data.gameState) {
+        setGameState(data.gameState);
+      }
+      
       if (gameStartedHandled) {
         console.log('⚠️ gameStarted ya procesado, ignorando');
         return;
       }
       gameStartedHandled = true;
       
-      // Usar ref o estado
       const gameInfo = currentGameRef.current || currentGame;
       
       // Calcular el índice del jugador actual
@@ -282,7 +287,8 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame }) {
             <div className="game-waiting">
               <h3>📋 Partida</h3>
               <p>Código: <strong>{currentGame.gameId}</strong></p>
-              <p>Jugadores: {players.length}/2</p>
+              <p>Estado: <strong>{gameState === 'playing' ? '🟢 En juego' : '⏳ Esperando'}</strong></p>
+              <p>Jugadores: {players.length}/4</p>
               
               <div className="players-list">
                 {players.map((player, idx) => (

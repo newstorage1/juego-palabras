@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor V2 - Estado de Sesión</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', monospace; }
+    body { background: #1a1a2e; color: #eee; min-height: 100vh; padding: 20px; }
+    h1 { color: #00d9ff; margin-bottom: 20px; }
+    .form-container { background: #16213e; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    input { padding: 10px; border-radius: 5px; border: 1px solid #333; background: #0f0f23; color: #fff; width: 200px; }
+    button { padding: 10px 20px; background: #00d9ff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #00b8d4; }
+    .status-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .panel { background: #16213e; padding: 20px; border-radius: 10px; }
+    .panel h2 { color: #00d9ff; margin-bottom: 15px; font-size: 16px; }
+    .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
+    .info-label { color: #888; }
+    .info-value { color: #fff; }
+    .connected { color: #4caf50; }
+    .disconnected { color: #f44336; }
+    .event-log { max-height: 300px; overflow-y: auto; background: #0f0f23; padding: 10px; border-radius: 5px; }
+    .event { padding: 5px 10px; margin: 5px 0; border-radius: 3px; font-size: 12px; }
+    .event.sent { background: #1b4332; border-left: 3px solid #4caf50; }
+    .event.received { background: #1a1a4e; border-left: 3px solid #9c27b0; }
+    .event-time { color: #666; font-size: 10px; }
+    .player-card { background: #0f0f23; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .player-name { font-size: 18px; font-weight: bold; color: #00d9ff; }
+    .player-stats { display: flex; gap: 20px; margin-top: 10px; }
+    .stat { color: #888; }
+    .stat span { color: #fff; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>🖥️ Monitor V2 - Estado de Sesión</h1>
+  
+  <div class="form-container">
+    <input type="text" id="gameIdInput" placeholder="Código de sesión (ej: SOPA-ABC)" />
+    <button onclick="connectToSession()">Conectar</button>
+    <button onclick="disconnectSession()" style="background: #f44336; margin-left: 10px;">Desconectar</button>
+  </div>
+
+  <div id="statusPanel" class="status-panel hidden">
+    <div class="panel">
+      <h2>📊 Estado de la Sesión</h2>
+      <div class="info-row">
+        <span class="info-label">Session ID:</span>
+        <span class="info-value" id="sessionId">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Estado del Juego:</span>
+        <span class="info-value" id="gameState">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Conexión Socket:</span>
+        <span class="info-value" id="connectionStatus">Desconectado</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Jugadores Conectados:</span>
+        <span class="info-value" id="playerCount">0</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Palabras Restantes:</span>
+        <span class="info-value" id="wordsLeft">0</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>👥 Jugadores</h2>
+      <div id="playersList"></div>
+    </div>
+
+    <div class="panel" style="grid-column: span 2;">
+      <h2>📨 Eventos Enviados</h2>
+      <div class="event-log" id="sentEvents"></div>
+    </div>
+
+    <div class="panel" style="grid-column: span 2;">
+      <h2>📬 Eventos Recibidos</h2>
+      <div class="event-log" id="receivedEvents"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket = null;
+    let currentGameId = null;
+    let eventsSent = [];
+    let eventsReceived = [];
+
+    function logEvent(type, eventName, data) {
+      const container = type === 'sent' ? document.getElementById('sentEvents') : document.getElementById('receivedEvents');
+      const eventDiv = document.createElement('div');
+      eventDiv.className = `event ${type}`;
+      const time = new Date().toLocaleTimeString();
+      eventDiv.innerHTML = `<span class="event-time">[${time}]</span> <strong>${eventName}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+      container.insertBefore(eventDiv, container.firstChild);
+      
+      if (container.children.length > 50) container.removeChild(container.lastChild);
+    }
+
+    function updateUI(gameData) {
+      document.getElementById('sessionId').textContent = currentGameId || '-';
+      document.getElementById('gameState').textContent = gameData?.gameState || 'No cargado';
+      document.getElementById('playerCount').textContent = gameData?.players?.length || 0;
+      document.getElementById('wordsLeft').textContent = gameData?.words?.filter(w => !w.foundBy).length || 0;
+
+      const playersList = document.getElementById('playersList');
+      playersList.innerHTML = '';
+      if (gameData?.players) {
+        gameData.players.forEach((p, i) => {
+          const card = document.createElement('div');
+          card.className = 'player-card';
+          card.innerHTML = `
+            <div class="player-name">${p.nickname} ${p.id === socket?.id ? '(Tú)' : ''}</div>
+            <div class="player-stats">
+              <div class="stat">Puntos: <span>${p.score}</span></div>
+              <div class="stat">Palabras: <span>${p.foundWords?.length || 0}</span></div>
+              <div class="stat">Estado: <span>${p.frozenUntil && Date.now() < p.frozenUntil ? '❄️ Congelado' : '🟢 Activo'}</span></div>
+            </div>
+          `;
+          playersList.appendChild(card);
+        });
+      }
+    }
+
+    function connectToSession() {
+      const gameId = document.getElementById('gameIdInput').value.trim().toUpperCase();
+      if (!gameId) { alert('Ingresa el código de sesión'); return; }
+
+      if (socket) socket.disconnect();
+
+      document.getElementById('connectionStatus').textContent = 'Conectando...';
+      document.getElementById('statusPanel').classList.remove('hidden');
+
+      socket = io('http://localhost:3001');
+
+      socket.on('connect', () => {
+        document.getElementById('connectionStatus').textContent = 'Conectado';
+        document.getElementById('connectionStatus').className = 'info-value connected';
+        
+        logEvent('received', 'connect', { socketId: socket.id });
+
+        socket.emit('joinGame', { gameId, userData: { nickname: 'Monitor' } }, (resp) => {
+          logEvent('sent', 'joinGame', { gameId, userData: { nickname: 'Monitor' } });
+          logEvent('received', 'joinGame response', resp);
+
+          if (resp.success) {
+            currentGameId = gameId;
+            updateUI(resp.gameData);
+
+            if (resp.gameData.gameState === 'playing') {
+              socket.emit('startGame', gameId);
+              logEvent('sent', 'startGame', { gameId });
+            }
+          } else {
+            alert('Error: ' + resp.error);
+          }
+        });
+      });
+
+      socket.on('playerJoined', (data) => {
+        logEvent('received', 'playerJoined', data);
+        fetchGameState();
+      });
+
+      socket.on('gameStarted', (data) => {
+        logEvent('received', 'gameStarted', data);
+        updateUI(data);
+      });
+
+      socket.on('wordFound', (data) => {
+        logEvent('received', 'wordFound', data);
+        fetchGameState();
+      });
+
+      socket.on('playerFrozen', (data) => {
+        logEvent('received', 'playerFrozen', data);
+        fetchGameState();
+      });
+
+      socket.on('timerUpdate', (data) => {
+        document.getElementById('gameState').textContent = `Jugando (${Math.floor(data.timeLeft / 60)}:${(data.timeLeft % 60).toString().padStart(2, '0')})`;
+      });
+
+      socket.on('gameEnded', (data) => {
+        logEvent('received', 'gameEnded', data);
+        updateUI(data);
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('connectionStatus').textContent = 'Desconectado';
+        document.getElementById('connectionStatus').className = 'info-value disconnected';
+      });
+    }
+
+    async function fetchGameState() {
+      try {
+        const res = await fetch(`http://localhost:3001/api/chat/${currentGameId}`);
+        const data = await res.json();
+      } catch (e) {}
+    }
+
+    function disconnectSession() {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        currentGameId = null;
+        document.getElementById('connectionStatus').textContent = 'Desconectado';
+        document.getElementById('connectionStatus').className = 'info-value disconnected';
+        document.getElementById('statusPanel').classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -16,6 +16,21 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
   const [localGameEndedData, setLocalGameEndedData] = useState(null);
 
   const socketRef = useRef(null);
+  const currentPlayerIdRef = useRef(null);
+
+  useEffect(() => {
+    const playerIdFromGameData = gameData?.players?.[playerIndex]?.id;
+    if (playerIdFromGameData) {
+      console.log('🎯 playerId del gameData:', playerIdFromGameData);
+      currentPlayerIdRef.current = playerIdFromGameData;
+    }
+  }, [gameData, playerIndex]);
+
+  useEffect(() => {
+    if (players[playerIndex]) {
+      currentPlayerIdRef.current = players[playerIndex].id;
+    }
+  }, [players, playerIndex]);
 
   useEffect(() => {
     if (gameData) {
@@ -106,11 +121,15 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
 
   // Escuchar eventos del servidor (como V1)
   useEffect(() => {
-    socketRef.current?.on('wordFound', (data) => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    socket.on('wordFound', (data) => {
       console.log('📬 wordFound socket:', data);
       setWords(prev => prev.map(w => 
         w.word === data.word ? { ...w, foundBy: data.playerId } : w
       ));
+      // Actualizar puntuación del jugador que encontró la palabra
       setPlayers(prev => prev.map(p => 
         p.id === data.playerId 
           ? { ...p, score: p.score + data.points, foundWords: [...p.foundWords, data.word] }
@@ -118,32 +137,29 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
       ));
     });
 
-    socketRef.current?.on('playerFrozen', (data) => {
-      const currentPlayerId = players[playerIndex]?.id;
-      if (data.playerId === currentPlayerId) {
+    socket.on('playerFrozen', (data) => {
+      if (data.playerId === currentPlayerIdRef.current) {
         setFrozen(true);
         setFrozenTime(data.duration);
       }
     });
 
-    socketRef.current?.on('timerUpdate', (data) => {
+    socket.on('timerUpdate', (data) => {
       setTimer(data.timeLeft);
     });
 
-    socketRef.current?.on('gameEnded', (data) => {
+    socket.on('gameEnded', (data) => {
       console.log('🎉 Juego terminado:', data);
       setLocalGameEndedData(data);
     });
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.off('wordFound');
-        socketRef.current.off('playerFrozen');
-        socketRef.current.off('timerUpdate');
-        socketRef.current.off('gameEnded');
-      }
+      socket.off('wordFound');
+      socket.off('playerFrozen');
+      socket.off('timerUpdate');
+      socket.off('gameEnded');
     };
-  }, [players, playerIndex, gameId]);
+  }, [gameId]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -187,22 +203,28 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
     const wordFound = words.find(w => w.word === currentWord && !w.foundBy);
 
     if (socketRef.current) {
+      const playerId = gameData?.players?.[playerIndex]?.id;
+      console.log('📤 Enviando selectWord - playerId:', playerId, 'playerIndex:', playerIndex);
+      if (!playerId) {
+        console.error('❌ No se pudo obtener playerId del gameData');
+        return;
+      }
       socketRef.current.emit('selectWord', {
         gameId,
-        playerIndex,
+        playerId,
         coordinates: selectedCells.map(c => [c.row, c.col]),
         word: currentWord
       });
 
       if (wordFound) {
-        const currentPlayer = players[playerIndex];
+        const currentPlayerId = currentPlayerIdRef.current;
         const points = currentWord.length >= 8 ? 3 : currentWord.length >= 5 ? 2 : 1;
         console.log('✅ Palabra encontrada:', currentWord, points, 'pts');
         setWords(prev => prev.map(w => 
-          w.word === currentWord ? { ...w, foundBy: currentPlayer?.id } : w
+          w.word === currentWord ? { ...w, foundBy: currentPlayerId } : w
         ));
         setPlayers(prev => prev.map(p => 
-          p.id === currentPlayer?.id 
+          p.id === currentPlayerId 
             ? { ...p, score: p.score + points, foundWords: [...p.foundWords, currentWord] }
             : p
         ));
@@ -234,13 +256,13 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
 
   // Calcular palabras restantes (como V1)
   const remainingWords = words.filter(w => !w.foundBy).map(w => w.word);
-  const foundByMeWords = words.filter(w => w.foundBy === players[playerIndex]?.id).map(w => w.word);
+  const foundByMeWords = words.filter(w => w.foundBy === currentPlayerIdRef.current).map(w => w.word);
 
   // Función para determinar clase de palabra
   const getWordClass = (word) => {
     const wordObj = words.find(w => w.word === word);
     if (!wordObj?.foundBy) return ''; // No encontrada
-    if (wordObj.foundBy === players[playerIndex]?.id) return 'found-by-me'; // Encontrada por mí
+    if (wordObj.foundBy === currentPlayerIdRef.current) return 'found-by-me'; // Encontrada por mí
     return 'found-by-other'; // Encontrada por otro
   };
 
