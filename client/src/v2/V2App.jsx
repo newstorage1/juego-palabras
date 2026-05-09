@@ -3,6 +3,7 @@ import PreLobby from './PreLobby';
 import LobbyIndividual from './LobbyIndividual';
 import LobbyMultijugador from './LobbyMultijugador';
 import GameScreen from './GameScreen';
+import { useSounds } from '../hooks/useSounds';
 import './V2.css';
 
 export default function V2App() {
@@ -11,6 +12,7 @@ export default function V2App() {
   const [gameData, setGameData] = useState(null);
   const [currentGameId, setCurrentGameId] = useState(null);
   const [playerIndex, setPlayerIndex] = useState(0);
+  const sounds = useSounds(userData?.soundEnabled !== false);
 
   useEffect(() => {
     const saved = localStorage.getItem('v2_userData');
@@ -59,6 +61,13 @@ export default function V2App() {
     document.documentElement.setAttribute('data-theme', theme);
   };
 
+  const handleToggleSound = () => {
+    const newSoundEnabled = !userData.soundEnabled;
+    const updated = { ...userData, soundEnabled: newSoundEnabled };
+    setUserData(updated);
+    localStorage.setItem('v2_userData', JSON.stringify(updated));
+  };
+
   const handleStartGame = (gameId, data, pIndex) => {
     console.log('handleStartGame - gameId:', gameId, 'data:', data, 'playerIndex:', pIndex);
     setCurrentGameId(gameId);
@@ -92,6 +101,7 @@ export default function V2App() {
         playerIndex={playerIndex}
         userData={userData}
         onBack={handleBackToLobby}
+        sounds={sounds}
       />
     );
   }
@@ -104,6 +114,8 @@ export default function V2App() {
           onLogout={handleLogout}
           onStartGame={handleStartGame}
           onUpdateTheme={handleUpdateTheme}
+          onToggleSound={handleToggleSound}
+          soundEnabled={userData.soundEnabled}
         />
       );
     }
@@ -113,6 +125,8 @@ export default function V2App() {
         onLogout={handleLogout}
         onStartGame={handleStartGame}
         onUpdateTheme={handleUpdateTheme}
+        onToggleSound={handleToggleSound}
+        soundEnabled={userData.soundEnabled}
       />
     );
   };
@@ -133,6 +147,13 @@ export default function V2App() {
           <span className="v2-stats" title="Mejor puntaje">
             ⭐ {userData.mejorPuntaje || 0}
           </span>
+          <button 
+            className="v2-sound-toggle" 
+            onClick={handleToggleSound}
+            title={userData.soundEnabled !== false ? 'Silenciar sonidos' : 'Activar sonidos'}
+          >
+            {userData.soundEnabled !== false ? '🔊' : '🔇'}
+          </button>
           <button className="v2-logout" onClick={handleLogout}>Salir</button>
         </div>
       </div>

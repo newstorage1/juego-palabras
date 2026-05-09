@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { useSounds } from '../hooks/useSounds';
 import './V2.css';
 
 const AVAILABLE_THEMES = [
@@ -31,8 +32,9 @@ const WORD_THEMES = {
   ]
 };
 
-export default function LobbyMultijugador({ userData, onLogout, onStartGame, onUpdateTheme }) {
+export default function LobbyMultijugador({ userData, onLogout, onStartGame, onUpdateTheme, onToggleSound, soundEnabled }) {
   const [socket, setSocket] = useState(null);
+  const sounds = useSounds(soundEnabled !== false);
   const [socketId, setSocketId] = useState(null);
   const [activeTab, setActiveTab] = useState('create');
   const [chatMessages, setChatMessages] = useState([]);
@@ -59,7 +61,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
     newSocket.on('connect', () => {
       console.log('Conectado al socket');
       setSocketId(newSocket.id);
-      newSocket.emit('joinLobby');
+      newSocket.emit('joinLobby', { nickname: userData.nickname });
     });
 
     newSocket.on('lobbyChatMessage', (data) => {
@@ -128,7 +130,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
         setCurrentGame(null);
         setPlayers([]);
         setGameEndedData(null);
-        newSocket.emit('joinLobby');
+        newSocket.emit('joinLobby', { nickname: userData.nickname });
       }, 5000);
     });
 
@@ -233,13 +235,13 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
               <div className="tab-buttons">
                 <button
                   className={`tab ${activeTab === 'create' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('create')}
+                  onClick={() => { setActiveTab('create'); sounds.playSelectLetter?.(); }}
                 >
                   Crear Partida
                 </button>
                 <button
                   className={`tab ${activeTab === 'join' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('join')}
+                  onClick={() => { setActiveTab('join'); sounds.playSelectLetter?.(); }}
                 >
                   Unirse a Partida
                 </button>
@@ -251,7 +253,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                     <label>Idioma</label>
                     <select
                       value={settings.language}
-                      onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                      onChange={(e) => { setSettings({ ...settings, language: e.target.value }); sounds.playSelectLetter?.(); }}
                     >
                       <option value="es">Español</option>
                       <option value="en">English</option>
@@ -262,7 +264,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                     <label>Dificultad</label>
                     <select
                       value={settings.gridSize}
-                      onChange={(e) => setSettings({ ...settings, gridSize: parseInt(e.target.value) })}
+                      onChange={(e) => { setSettings({ ...settings, gridSize: parseInt(e.target.value) }); sounds.playSelectLetter?.(); }}
                     >
                       <option value={10}>Fácil (10x10)</option>
                       <option value={15}>Medio (15x15)</option>
@@ -274,7 +276,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                     <label>Temario de Palabras</label>
                     <select
                       value={settings.wordThemeMode}
-                      onChange={(e) => setSettings({ ...settings, wordThemeMode: e.target.value })}
+                      onChange={(e) => { setSettings({ ...settings, wordThemeMode: e.target.value }); sounds.playSelectLetter?.(); }}
                     >
                       <option value="auto">Automático (aleatorio)</option>
                       <option value="manual">Manual (elegir tema)</option>
@@ -286,7 +288,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                       <label>Selecciona el tema</label>
                       <select
                         value={settings.wordTheme}
-                        onChange={(e) => setSettings({ ...settings, wordTheme: e.target.value })}
+                        onChange={(e) => { setSettings({ ...settings, wordTheme: e.target.value }); sounds.playSelectLetter?.(); }}
                       >
                         {(WORD_THEMES[settings.language] || []).map(t => (
                           <option key={t.id} value={t.id}>{t.label}</option>
@@ -305,6 +307,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                           onClick={() => {
                             setSettings({ ...settings, theme: theme.name });
                             if (onUpdateTheme) onUpdateTheme(theme.name);
+                            sounds.playSelectLetter?.();
                           }}
                         >
                           <div
@@ -317,7 +320,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                     </div>
                   </div>
 
-                  <button className="btn btn-primary" onClick={handleCreateGame}>
+                  <button className="btn btn-primary" onClick={() => { sounds.playClick?.(); handleCreateGame(); }}>
                     Crear Partida
                   </button>
                 </div>
@@ -335,7 +338,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
                       style={{ textTransform: 'uppercase' }}
                     />
                   </div>
-                  <button className="btn btn-primary" onClick={handleJoinGame}>
+                  <button className="btn btn-primary" onClick={() => { sounds.playClick?.(); handleJoinGame(); }}>
                     Unirse a Partida
                   </button>
                 </div>
@@ -359,7 +362,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
               </div>
 
               {currentGame.isCreator && players.length >= 1 ? (
-                <button className="btn btn-start" onClick={handleStartGame}>
+                <button className="btn btn-start" onClick={() => { sounds.playClick?.(); handleStartGame(); }}>
                   ▶ Iniciar Juego
                 </button>
               ) : !currentGame.isCreator ? (
@@ -390,7 +393,7 @@ export default function LobbyMultijugador({ userData, onLogout, onStartGame, onU
               onKeyPress={handleKeyPress}
               placeholder="Escribe un mensaje..."
             />
-            <button onClick={sendChatMessage}>Enviar</button>
+            <button onClick={() => { sounds.playClick?.(); sendChatMessage(); }}>Enviar</button>
           </div>
         </div>
       </div>

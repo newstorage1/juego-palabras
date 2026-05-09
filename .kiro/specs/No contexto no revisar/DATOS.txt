@@ -1,0 +1,8 @@
+4. **Rutas de archivos sugeridas**:
+   - `/sounds/click.mp3`         //sfx_Click Pop Digital Trigger (Tecnológico)
+   - `/sounds/select_letter.mp3` //sfx_Mechanic Digital UI The Kinetic Key (Efecto máquina de escribir moderna)
+   - `/sounds/word_found.mp3`    //sfx_Click  Pop The Modern Bubble (Pop orgánico)
+   - `/sounds/opponent_word.mp3` //sfx_Impacto Glitch Impact (Impacto Electrónico  Digital)
+   - `/sounds/victory.mp3`
+   - `/sounds/defeat.mp3`	//sfx_Whoosh Pesado (Cinematográfico)
+   - `/sounds/game_start.mp3`   

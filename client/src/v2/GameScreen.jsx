@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import './V2.css';
 
-export default function GameScreen({ gameId, gameData, playerIndex, userData, onBack }) {
+export default function GameScreen({ gameId, gameData, playerIndex, userData, onBack, sounds }) {
   const [grid, setGrid] = useState(gameData?.grid || []);
   const [words, setWords] = useState(gameData?.words || []);
   const [players, setPlayers] = useState(gameData?.players || []);
@@ -17,9 +17,14 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
   const [gameReady, setGameReady] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setGameReady(true), 1500);
+    const timer = setTimeout(() => {
+      setGameReady(true);
+      if (sounds?.playGameStart) {
+        sounds.playGameStart();
+      }
+    }, 1500);
     return () => clearTimeout(timer);
-  }, []);
+  }, [sounds]);
 
   const socketRef = useRef(null);
   const currentPlayerIdRef = useRef(null);
@@ -127,6 +132,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
     if (!socket) return;
 
     socket.on('wordFound', (data) => {
+      const isMyWord = data.playerId === currentPlayerIdRef.current;
       setWords(prev => prev.map(w =>
         w.word === data.word ? { ...w, foundBy: data.playerId } : w
       ));
@@ -135,6 +141,9 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
           ? { ...p, score: p.score + data.points, foundWords: [...p.foundWords, data.word] }
           : p
       ));
+      if (!isMyWord && sounds?.playOpponentWord) {
+        sounds.playOpponentWord();
+      }
     });
 
     socket.on('playerFrozen', (data) => {
@@ -146,6 +155,11 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
 
     socket.on('gameEnded', (data) => {
       setLocalGameEndedData(data);
+      if (data.winner?.id === currentPlayerIdRef.current) {
+        if (sounds?.playVictory) sounds.playVictory();
+      } else {
+        if (sounds?.playDefeat) sounds.playDefeat();
+      }
     });
 
     return () => {
@@ -167,6 +181,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
     if (selectedCells.length === 0) {
       setSelectedCells([cell]);
       setCurrentWord(cell.letter);
+      if (sounds?.playSelectLetter) sounds.playSelectLetter();
     } else {
       const lastCell = selectedCells[selectedCells.length - 1];
       const rowDiff = row - lastCell.row;
@@ -175,6 +190,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
       if (validDirections.some(([dr, dc]) => dr === rowDiff && dc === colDiff)) {
         setSelectedCells([...selectedCells, cell]);
         setCurrentWord(currentWord + cell.letter);
+        if (sounds?.playSelectLetter) sounds.playSelectLetter();
       }
     }
   };
@@ -204,6 +220,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
         const points = currentWord.length >= 8 ? 3 : currentWord.length >= 5 ? 2 : 1;
         setWords(prev => prev.map(w => w.word === currentWord ? { ...w, foundBy: currentPlayerId } : w));
         setPlayers(prev => prev.map(p => p.id === currentPlayerId ? { ...p, score: p.score + points, foundWords: [...p.foundWords, currentWord] } : p));
+        if (sounds?.playWordFound) sounds.playWordFound();
       }
 
       setSelectedCells([]);
@@ -248,7 +265,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
     return (
       <div className="game-ended-overlay-v2">
         <div className="game-ended-modal">
-          <h1>🎉 ¡Juego Terminado!</h1>
+          <h1>🎉 Juego Terminado!</h1>
           <div className="winner-section">
             <h2>Ganador: {localGameEndedData.winner?.nickname || 'Nadie'}</h2>
             <p className="winner-score">Puntos: {localGameEndedData.winner?.score || 0}</p>
@@ -268,7 +285,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
               {localGameEndedData.stats.longestWord && <p>Palabra más larga: {localGameEndedData.stats.longestWord}</p>}
             </div>
           )}
-          <button className="abandonar-btn" onClick={onBack}>Regresar al Lobby</button>
+          <button className="abandonar-btn" onClick={() => { if (sounds?.playClick) sounds.playClick(); onBack(); }}>Regresar al Lobby</button>
         </div>
       </div>
     );
@@ -284,7 +301,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
             <span className="game-avatar">{userData.avatar}</span>
             <span className="game-nickname">{userData.nickname}</span>
           </div>
-          <button className="game-btn-back" onClick={onBack}>← Regresar al Lobby</button>
+          <button className="game-btn-back" onClick={() => { if (sounds?.playClick) sounds.playClick(); onBack(); }}>← Regresar al Lobby</button>
         </div>
       </div>
 
@@ -326,13 +343,13 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
                 </div>
                 <div className="chat-input-v2">
                   <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Escribe un mensaje..." />
-                  <button onClick={handleSendMessage}>Enviar</button>
+                  <button onClick={() => { if (sounds?.playClick) sounds.playClick(); handleSendMessage(); }}>Enviar</button>
                 </div>
               </div>
             </div>
 
             <div className="board-container-v2">
-              <div className={`board-v2 ${gameReady ? 'ready' : ''}`} style={{ gridTemplateColumns: `repeat(${gameData?.settings?.gridSize || 15}, 1fr)` }}>
+              <div className={`board-v2 ${gameReady ? 'ready' : ''} ${gameReady ? 'animating' : ''}`} style={{ gridTemplateColumns: `repeat(${gameData?.settings?.gridSize || 15}, 1fr)` }}>
                 {grid.map((row, rowIndex) =>
                   row.map((cell, colIndex) => {
                     const isSelected = selectedCells.some(c => c.row === rowIndex && c.col === colIndex);
@@ -342,7 +359,9 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
                     if (isSelected) cellClass += ' selected';
                     else if (foundByMe) cellClass += ' found-by-me';
                     else if (isFound) cellClass += ' found-by-other';
-                    return <div key={`${rowIndex}-${colIndex}`} className={cellClass} onClick={() => handleCellClick(rowIndex, colIndex)}>{cell}</div>;
+                    const delay = (rowIndex * (gameData?.settings?.gridSize || 15) + colIndex) * 0.01;
+                    const cellStyle = gameReady ? { animationDelay: `${Math.min(delay, 1.2)}s` } : {};
+                    return <div key={`${rowIndex}-${colIndex}`} className={cellClass} style={cellStyle} onClick={() => handleCellClick(rowIndex, colIndex)}>{cell}</div>;
                   })
                 )}
               </div>
@@ -350,7 +369,7 @@ export default function GameScreen({ gameId, gameData, playerIndex, userData, on
           </div>
 
           <div className="confirm-button-v2">
-            <button className="btn btn-primary" onClick={confirmSelection} disabled={currentWord.length < 2 || frozen}>✅ Confirmar</button>
+            <button className="btn btn-primary" onClick={() => { if (sounds?.playClick) sounds.playClick(); confirmSelection(); }} disabled={currentWord.length < 2 || frozen}>✅ Confirmar</button>
           </div>
 
           {frozen && (

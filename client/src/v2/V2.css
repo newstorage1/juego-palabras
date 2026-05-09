@@ -424,6 +424,20 @@
   background: var(--v2-border);
 }
 
+.v2-sound-toggle {
+  padding: 0.5rem;
+  background: var(--v2-bg-alt);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
+.v2-sound-toggle:hover {
+  background: var(--v2-border);
+}
+
 .v2-mode {
   padding: 0.25rem 0.75rem;
   background: var(--v2-chat-system-bg);
@@ -1343,4 +1357,92 @@
   color: var(--v2-text-muted);
   font-size: 0.875rem;
   margin-top: 1rem;
+}
+
+/* Nickname input styles */
+.nickname-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nickname-input-wrapper input {
+  width: 100%;
+}
+
+.nickname-input-wrapper input.checking {
+  padding-right: 30px;
+}
+
+.nickname-check {
+  position: absolute;
+  right: 10px;
+  font-size: 1rem;
+}
+
+.error .suggestion-btn {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--v2-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  width: 100%;
+  text-align: left;
+}
+
+.error .suggestion-btn:hover {
+  background: var(--v2-secondary);
+}
+
+/* ============================================
+   ANIMACIONES DE ENTRADA DEL JUEGO
+   ============================================ */
+
+@keyframes cellReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-10deg);
+  }
+  70% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.board-v2 .cell-v2 {
+  opacity: 0;
+}
+
+.board-v2.ready .cell-v2 {
+  opacity: 1;
+}
+
+.board-v2.animating .cell-v2 {
+  opacity: 0;
+  animation: cellReveal 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes boardFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.board-v2.animating {
+  animation: boardFadeIn 0.5s ease-out;
 }

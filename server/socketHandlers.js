@@ -65,6 +65,47 @@ function generateGameCode() {
 // Almacenamiento en memoria
 let games = {};
 let users = {};
+let connectedNicknames = new Set(); // Nicknames de usuarios actualmente conectados
+
+// Obtener lista de nicknames en uso (para validar registro)
+function getUsedNicknames() {
+  console.log('\n========== VERIFICANDO NICKNAMES ==========');
+  const usedNicknames = new Set();
+  
+  // 1. Nicknames de juegos guardados en memoria
+  console.log(`- Buscando en ${Object.keys(games).length} juegos guardados...`);
+  Object.values(games).forEach(game => {
+    if (game.players) {
+      game.players.forEach(player => {
+        if (player.nickname) {
+          usedNicknames.add(player.nickname.toLowerCase());
+        }
+      });
+    }
+  });
+  console.log(`  → Nicknames en juegos: ${Array.from(usedNicknames).join(', ') || 'ninguno'}`);
+  
+  // 2. Nicknames de usuarios actualmente conectados
+  console.log(`- Buscando en ${connectedNicknames.size} conexiones activas...`);
+  console.log(`  → Conexiones activas: ${Array.from(connectedNicknames).join(', ') || 'ninguna'}`);
+  connectedNicknames.forEach(nick => {
+    usedNicknames.add(nick);
+  });
+  
+  const result = Array.from(usedNicknames);
+  console.log(`=> Total nicknames en uso: ${result.join(', ') || 'ninguno'}`);
+  console.log('============================================\n');
+  
+  return result;
+}
+
+// Generar sugerencia de nickname alternativa
+function generateNicknameSuggestion(baseNickname) {
+  const suffixes = ['_player', '_x', '_pro', '_2024', '_game', '_hero', '_star'];
+  const randomSuffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+  const randomNum = Math.floor(Math.random() * 1000);
+  return `${baseNickname}${randomSuffix}${randomNum}`;
+}
 
 // Inicializar desde archivos guardados
 function initializeFromSavedGames() {
@@ -98,8 +139,17 @@ function handleSocketEvents(io) {
     console.log('Usuario conectado:', socket.id);
     
     // Unirse al room del lobby multiplayer
-    socket.on('joinLobby', () => {
+    socket.on('joinLobby', (data) => {
       socket.join('lobby');
+      
+      // Registrar nickname del usuario
+      if (data && data.nickname) {
+        const nick = data.nickname.toLowerCase();
+        connectedNicknames.add(nick);
+        console.log(`➕ USUARIO EN LOBBY: "${nick}" (total conexiones: ${connectedNicknames.size})`);
+        users[socket.id] = { nickname: nick };
+      }
+      
       // Enviar mensajes anteriores del lobby
       socket.emit('lobbyChatHistory', lobbyChatMessages);
       console.log('Usuario joined to lobby');
@@ -193,7 +243,10 @@ function handleSocketEvents(io) {
       };
       
       games[gameId] = gameData;
-      users[socket.id] = { gameId, playerIndex: 0 };
+      const creatorNickname = userData.nickname || 'Jugador 1';
+      connectedNicknames.add(creatorNickname.toLowerCase());
+      console.log(`➕ CONEXIÓN AGREGADA: "${creatorNickname.toLowerCase()}" (total: ${connectedNicknames.size})`);
+      users[socket.id] = { gameId, playerIndex: 0, nickname: creatorNickname };
       
       // Guardar partida
       saveGame(gameId, gameData);
@@ -256,9 +309,12 @@ function handleSocketEvents(io) {
         const existingPlayer = game.players.find(p => p.nickname === userData?.nickname);
         console.log(`   Buscando por nickname: ${userData?.nickname}, encontrado:`, existingPlayer);
         if (existingPlayer) {
-          users[socket.id] = { gameId, playerIndex: game.players.indexOf(existingPlayer) };
+          const playerIdx = game.players.indexOf(existingPlayer);
+          users[socket.id] = { gameId, playerIndex: playerIdx, nickname: existingPlayer.nickname };
+          connectedNicknames.add(existingPlayer.nickname.toLowerCase());
+          console.log(`➕ RECONEXIÓN (playing): "${existingPlayer.nickname.toLowerCase()}" (total: ${connectedNicknames.size})`);
           socket.join(gameId);
-          console.log(`   ✅ Reconectado - playerIndex: ${game.players.indexOf(existingPlayer)}`);
+          console.log(`   ✅ Reconectado - playerIndex: ${playerIdx}`);
           
           const playersData = game.players.map(p => ({
             id: p.id,
@@ -293,7 +349,10 @@ function handleSocketEvents(io) {
       const existingPlayer = game.players.find(p => p.nickname === userData?.nickname);
       if (existingPlayer) {
         console.log(`   🔄 Reconectando jugador existente: ${userData.nickname}, id: ${existingPlayer.id}`);
-        users[socket.id] = { gameId, playerIndex: game.players.indexOf(existingPlayer) };
+        const playerIdx = game.players.indexOf(existingPlayer);
+        users[socket.id] = { gameId, playerIndex: playerIdx, nickname: existingPlayer.nickname };
+        connectedNicknames.add(existingPlayer.nickname.toLowerCase());
+        console.log(`➕ RECONEXIÓN (waiting): "${existingPlayer.nickname.toLowerCase()}" (total: ${connectedNicknames.size})`);
         socket.join(gameId);
         
         const playersData = game.players.map(p => ({
@@ -324,9 +383,10 @@ function handleSocketEvents(io) {
       }
       
       const playerIndex = game.players.length;
+      const nickname = userData.nickname || 'Jugador 2';
       game.players.push({
         id: socket.id,
-        nickname: userData.nickname || 'Jugador 2',
+        nickname: nickname,
         avatar: userData.avatar || 'default',
         score: 0,
         consecutiveFailures: 0,
@@ -335,7 +395,9 @@ function handleSocketEvents(io) {
         settings: userData.settings || {}
       });
       
-      users[socket.id] = { gameId, playerIndex };
+      connectedNicknames.add(nickname.toLowerCase());
+      console.log(`➕ NUEVO JUGADOR: "${nickname.toLowerCase()}" (total: ${connectedNicknames.size})`);
+      users[socket.id] = { gameId, playerIndex, nickname };
       
       socket.join(gameId);
       
@@ -586,6 +648,25 @@ function handleSocketEvents(io) {
     socket.on('disconnect', () => {
       console.log('Usuario desconectado:', socket.id);
       
+      // Eliminar nickname de conectados activos
+      const userInfo = users[socket.id];
+      if (userInfo && userInfo.nickname) {
+        const nickToRemove = userInfo.nickname.toLowerCase();
+        console.log(`➖ DESCONEXIÓN: "${nickToRemove}"`);
+        
+        // Verificar si hay otro usuario con el mismo nickname activo
+        const hasOtherUser = Object.values(users).some(
+          u => u.socketId !== socket.id && u.nickname?.toLowerCase() === nickToRemove
+        );
+        
+        if (!hasOtherUser) {
+          connectedNicknames.delete(nickToRemove);
+          console.log(`  → Eliminado de conexiones activas (total: ${connectedNicknames.size})`);
+        } else {
+          console.log(`  → Otro usuario con mismo nickname, se mantiene`);
+        }
+      }
+      
       // No eliminamos al jugador para permitir reconexión
       // El jugador puede reconectarse usando su nickname
       delete users[socket.id];
@@ -662,5 +743,7 @@ module.exports = {
   users,
   endGame,
   getAvailableThemes,
-  getWordsForTheme
+  getWordsForTheme,
+  getUsedNicknames,
+  generateNicknameSuggestion
 };

@@ -438,12 +438,140 @@ Entra al Lobby Multijugador (Sala de Espera)
 2. ✅ Temporizador global
 3. ✅ Lógica de congelamiento
 4. ✅ Sistema de personalización (temas)
+5. o no puede interactuar con el tablero
+- Se muestra un overlay con mensaje de congelamiento
+- El contador de intentos fallidos se resetea al encontrar una palabra correctamente
+
+### Condición de victoria:
+
+- **Modo Individual**: Encontrar el 100% de las palabras
+- **Modo Multijugador**: Encontrar el 51% de las palabras
+- Cuando se alcanza, el servidor ejecuta `endGame()` y emite `gameEnded` a todos los jugadores
+
+### Chat del juego:
+
+- Funciona mediante HTTP polling (cada 1 segundo)
+- Los mensajes se almacenan en memoria en el servidor
+- Cualquier jugador en la partida puede enviar y ver mensajes
+
+---
+
+## 🎯 Funcionalidades Implementadas
+
+1. ✅ Sistema de UI para selección (botón Confirmar)
+2. ✅ Temporizador global
+3. ✅ Lógica de congelamiento
+4. ✅ Sistema de personalización (temas)
 5. ✅ Modo individual y multijugador
 6. ✅ Chat mediante HTTP polling
 7. ✅ Pantalla de fin de juego con botón de regresar al lobby y auto-redirect
 8. ✅ Validación de edad para modo multijugador
 9. ✅ Estadísticas del usuario (partidasGanadas, mejorPuntaje)
 10. ✅ Persistencia en localStorage
+11. ✅ Selección de temario de palabras (automático/manual)
+
+---
+
+## 🔊 Sistema de Sonidos
+
+### Tipos de Sonidos Requeridos:
+
+| Sonido | Descripción | Trigger |
+|--------|-------------|---------|
+| **Click botones** | Sonido breve al presionar cualquier botón | Click en botones de UI |
+| **Selección de letra** | Sonido suave al seleccionar una celda/letra | Al arrastrar sobre el tablero |
+| **Palabra encontrada (propia)** | Sonido de éxito al completar tu palabra | Confirmar palabra correcta |
+| **Palabra encontrada (oponente)** | Sonido diferente cuando el rival encuentra palabra | Evento wordFound de otro jugador |
+| **Victoria** | Sonido festivo al ganar la partida | Juego ganado |
+| **Derrota** | Sonido de derrota al perder | Juego perdido |
+| **Iniciar partida** | Sonido de inicio/countdown al comenzar el juego | Transición de waiting a playing |
+
+### Control de Sonidos:
+
+- **Configuración global**: Toggle en configuración para habilitar/deshabilitar todos los sonidos
+- **Persistencia**: La preference se guarda en localStorage
+- **默认值**: Por defecto los sonidos estarán habilitados
+
+### Implementación Recomendada:
+
+1. **Tecnología**: Web Audio API o librería como `howler.js`
+2. **Carpeta de assets**: `/client/public/sounds/` con archivos mp3/webm
+3. **Componente gestor**: Crear un hook `useSound()` para manejar la reproducción
+4. **Rutas de archivos sugeridas**:
+   - `/sounds/click.mp3`
+   - `/sounds/select_letter.mp3`
+   - `/sounds/word_found.mp3`
+   - `/sounds/opponent_word.mp3`
+   - `/sounds/victory.mp3`
+   - `/sounds/defeat.mp3`
+   - `/sounds/game_start.mp3`
+
+---
+
+## 🎬 Sistema de Animaciones
+
+### Animación al Iniciar Partida:
+
+Se recomienda una **animación de entrada tipo "reveal"** que muestre el tablero progresivamente:
+
+- **Efecto sugerido**: Animación de aparecenimiento progresivo del tablero (celda por celda o fila por fila) con delay escalonado
+- **Duración**: 1-2 segundos
+- **Efecto visual**: Las letras aparecen con un pequeño scale o fade-in
+- **Alternativa**: Efecto de "desempolve" o efecto de energía atravesando el tablero
+
+### Otras Animaciones Sugeridas:
+
+| Animación | Descripción |
+|-----------|-------------|
+| **Selección activa** | Resaltado visual animado (glow/pulsación) en las celdas seleccionadas |
+| **Palabra encontrada** | Animación de éxito (check, bounce, o particles) en la palabra encontrada |
+| **Congelamiento** | Efecto de hielo/escarcha sobre el tablero del jugador congelado |
+| **Transición de pantalla** | Fade in/out suave entre Pre-lobby → Lobby → Juego |
+
+### Implementación Recomendada:
+
+1. **Tecnología**: CSS Animations o librería como `framer-motion` (React)
+2. **Approach**: Componentes de animación reutilizables
+3. **Rendimiento**: Usar `transform` y `opacity` para evitar repaints
+
+---
+
+## 🔧 Cómo Agregar Sonidos y Animaciones
+
+### Pasos para Implementar:
+
+1. **Preparar assets de audio**:
+   - Crear carpeta `/client/public/sounds/`
+   - Agregar archivos de sonido (mp3 o webm)
+   - O usar un banco de sonidos gratuito
+
+2. **Crear hook de sonidos** (`useSound.js`):
+   ```javascript
+   // Ejemplo básico
+   import { useRef, useCallback } from 'react';
+   import useSound from 'use-sound';
+
+   export const useGameSounds = (enabled) => {
+     const [playClick] = useSound('/sounds/click.mp3', { enabled });
+     const [playWordFound] = useSound('/sounds/word_found.mp3', { enabled });
+     // ... resto de sonidos
+     return { playClick, playWordFound, ... };
+   };
+   ```
+
+3. **Integrar en componentes**:
+   - Llamar a los sonidos en los handlers correspondientes
+   - Recibir `soundEnabled` de la configuración del usuario
+
+4. **Para animaciones**:
+   - Instalar `framer-motion` o usar CSS animations puro
+   - Crear componentes AnimatedCell, AnimatedBoard, etc.
+   - Aplicar en los momentos clave del juego
+
+### Notas:
+- Asegurar que los sonidos no bloqueen la interacción del usuario (autoplay restrictions)
+- Considerar efectos de sonido como alternativa (más ligero que archivos de audio)
+- Probar en diferentes navegadores (Web Audio API tiene soporte variable)
 
 ---
 
@@ -451,3 +579,5 @@ Entra al Lobby Multijugador (Sala de Espera)
 
 1. Generación de palabras con IA
 2. Persistencia en servidor (guardado automático cada 30s)
+3. Sistema de sonidos (diseño e implementación)
+4. Sistema de animaciones (diseño e implementación)

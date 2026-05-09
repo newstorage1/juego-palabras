@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { useSounds } from '../hooks/useSounds';
 import './V2.css';
 
 const AVAILABLE_THEMES = [
@@ -31,8 +32,9 @@ const WORD_THEMES = {
   ]
 };
 
-export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpdateTheme }) {
+export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpdateTheme, onToggleSound, soundEnabled }) {
   const [socket, setSocket] = useState(null);
+  const sounds = useSounds(soundEnabled !== false);
   const [socketId, setSocketId] = useState(null);
   const [mode, setMode] = useState('create');
   const [joinCode, setJoinCode] = useState('');
@@ -150,7 +152,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
           <label>Idioma</label>
           <select
             value={settings.language}
-            onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+            onChange={(e) => { setSettings({ ...settings, language: e.target.value }); sounds.playSelectLetter?.(); }}
           >
             <option value="es">Español</option>
             <option value="en">English</option>
@@ -161,7 +163,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
           <label>Dificultad</label>
           <select
             value={settings.gridSize}
-            onChange={(e) => setSettings({ ...settings, gridSize: parseInt(e.target.value) })}
+            onChange={(e) => { setSettings({ ...settings, gridSize: parseInt(e.target.value) }); sounds.playSelectLetter?.(); }}
           >
             <option value={10}>Fácil (10x10)</option>
             <option value={15}>Medio (15x15)</option>
@@ -173,7 +175,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
           <label>Temario de Palabras</label>
           <select
             value={settings.wordThemeMode}
-            onChange={(e) => setSettings({ ...settings, wordThemeMode: e.target.value })}
+            onChange={(e) => { setSettings({ ...settings, wordThemeMode: e.target.value }); sounds.playSelectLetter?.(); }}
           >
             <option value="auto">Automático (aleatorio)</option>
             <option value="manual">Manual (elegir tema)</option>
@@ -185,7 +187,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
             <label>Selecciona el tema</label>
             <select
               value={settings.wordTheme}
-              onChange={(e) => setSettings({ ...settings, wordTheme: e.target.value })}
+              onChange={(e) => { setSettings({ ...settings, wordTheme: e.target.value }); sounds.playSelectLetter?.(); }}
             >
               {(WORD_THEMES[settings.language] || []).map(t => (
                 <option key={t.id} value={t.id}>{t.label}</option>
@@ -204,6 +206,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
                 onClick={() => {
                   setSettings({ ...settings, theme: theme.name });
                   if (onUpdateTheme) onUpdateTheme(theme.name);
+                  sounds.playSelectLetter?.();
                 }}
               >
                 <div
@@ -221,13 +224,13 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
           <div className="btn-group">
             <button
               className={`btn ${mode === 'create' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setMode('create')}
+              onClick={() => { setMode('create'); sounds.playSelectLetter?.(); }}
             >
               Crear Partida
             </button>
             <button
               className={`btn ${mode === 'join' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setMode('join')}
+              onClick={() => { setMode('join'); sounds.playSelectLetter?.(); }}
             >
               Unirse a Partida
             </button>
@@ -235,7 +238,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
         </div>
 
         {mode === 'create' ? (
-          <button className="btn btn-primary" onClick={handleCreateGame}>
+          <button className="btn btn-primary" onClick={() => { sounds.playClick?.(); handleCreateGame(); }}>
             🎮 Crear Partida
           </button>
         ) : (
@@ -250,7 +253,7 @@ export default function LobbyIndividual({ userData, onLogout, onStartGame, onUpd
                 style={{ textTransform: 'uppercase' }}
               />
             </div>
-            <button className="btn btn-primary" onClick={handleJoinGame}>
+            <button className="btn btn-primary" onClick={() => { sounds.playClick?.(); handleJoinGame(); }}>
               Unirse a Partida
             </button>
           </>

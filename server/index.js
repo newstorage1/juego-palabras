@@ -86,6 +86,26 @@ app.get('/api/chat/:gameId', (req, res) => {
   res.json({ messages: chatMessagesStore[gameId] || [] });
 });
 
+// Rutas HTTP para verificar nicknames disponibles
+const { getUsedNicknames, generateNicknameSuggestion } = require('./socketHandlers');
+
+app.get('/api/checkNickname/:nickname', (req, res) => {
+  const { nickname } = req.params;
+  console.log(`\n🔍 PETICIÓN: Verificar disponibilidad de "${nickname}"`);
+  
+  const usedNicknames = getUsedNicknames();
+  const isAvailable = !usedNicknames.includes(nickname.toLowerCase());
+  
+  if (isAvailable) {
+    console.log(`✅ "${nickname}" DISPONIBLE\n`);
+    res.json({ available: true });
+  } else {
+    const suggestion = generateNicknameSuggestion(nickname);
+    console.log(`❌ "${nickname}" EN USO - Sugerencia: "${suggestion}"\n`);
+    res.json({ available: false, suggestion });
+  }
+});
+
 // Rutas HTTP para seleccionar palabra
 const wordSelectResults = {};
 
